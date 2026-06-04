@@ -468,7 +468,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Controlla sessione via server (cookie httpOnly)
     try {
-      const res = await fetch(API + '/api/auth/session');
+      const res = await fetch(API + '/api/auth/session', { credentials: 'include' });
       if (res.ok) {
         const { user, profile } = await res.json();
         currentUser = user;
