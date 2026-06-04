@@ -167,6 +167,68 @@ app.get('/api/auth/session', async (req, res) => {
 });
 
 // ===================================================
+// ADMIN — middleware
+// ===================================================
+function requireAdmin(req, res, next) {
+  if (req.headers['x-admin-secret'] !== process.env.ADMIN_SECRET) {
+    return res.status(401).json({ error: 'Non autorizzato' });
+  }
+  next();
+}
+
+// POST /api/admin/verify
+app.post('/api/admin/verify', (req, res) => {
+  if (req.body.password !== process.env.ADMIN_SECRET) {
+    return res.status(401).json({ error: 'Password errata' });
+  }
+  res.json({ ok: true });
+});
+
+// GET /api/admin/offers
+app.get('/api/admin/offers', requireAdmin, async (req, res) => {
+  const { data, error } = await sbService.from('offers').select('*').order('sort_order');
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data);
+});
+
+// POST /api/admin/offers
+app.post('/api/admin/offers', requireAdmin, async (req, res) => {
+  const { name, category, tag, price, original_price, expiry, description, image_url, sort_order, active } = req.body;
+  if (!name || !description || !price || !category) return res.status(400).json({ error: 'Campi obbligatori mancanti' });
+  const { data, error } = await sbService.from('offers')
+    .insert({ name, category, tag, price, original_price, expiry, description, image_url, sort_order: sort_order || 0, active: active !== false })
+    .select().single();
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data);
+});
+
+// PUT /api/admin/offers/:id
+app.put('/api/admin/offers/:id', requireAdmin, async (req, res) => {
+  const { id } = req.params;
+  const { name, category, tag, price, original_price, expiry, description, image_url, sort_order, active } = req.body;
+  const { data, error } = await sbService.from('offers')
+    .update({ name, category, tag, price, original_price, expiry, description, image_url, sort_order, active })
+    .eq('id', id).select().single();
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data);
+});
+
+// DELETE /api/admin/offers/:id
+app.delete('/api/admin/offers/:id', requireAdmin, async (req, res) => {
+  const { id } = req.params;
+  const { error } = await sbService.from('offers').delete().eq('id', id);
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ ok: true });
+});
+
+// GET /api/admin/users
+app.get('/api/admin/users', requireAdmin, async (req, res) => {
+  const { data, error } = await sbService.from('profiles').select('*').order('created_at', { ascending: false });
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data);
+});
+
+// ===================================================
 // OFFERTE
 // ===================================================
 app.get('/api/offers', async (req, res) => {

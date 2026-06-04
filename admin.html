@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin — Club 1 Piano</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
+<link rel="stylesheet" href="admin.css">
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="admin-login" class="login-wrap">
+  <div class="login-box">
+    <div class="login-logo">Club 1 Piano</div>
+    <div class="login-sub">Pannello Amministratore</div>
+    <input type="password" id="admin-pwd" class="a-input" placeholder="Password admin" autocomplete="current-password">
+    <div id="login-err" class="a-error hidden"></div>
+    <button class="a-btn" onclick="adminLogin()">Accedi</button>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div id="admin-dashboard" class="hidden">
+
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <span class="brand-dot"></span>
+      Club 1 Piano
+    </div>
+    <nav class="sidebar-nav">
+      <button class="nav-item active" data-tab="offers" onclick="switchTab('offers')">
+        <i class="ti ti-tag"></i> Offerte
+      </button>
+      <button class="nav-item" data-tab="events" onclick="switchTab('events')">
+        <i class="ti ti-calendar-event"></i> Eventi
+      </button>
+      <button class="nav-item" data-tab="push" onclick="switchTab('push')">
+        <i class="ti ti-bell-ringing"></i> Notifiche Push
+      </button>
+      <button class="nav-item" data-tab="users" onclick="switchTab('users')">
+        <i class="ti ti-users"></i> Utenti
+      </button>
+    </nav>
+    <button class="sidebar-logout" onclick="adminLogout()">
+      <i class="ti ti-logout"></i> Esci
+    </button>
+  </aside>
+
+  <main class="dashboard-main">
+
+    <!-- TAB: OFFERTE -->
+    <div id="tab-offers" class="tab-panel active">
+      <div class="panel-head">
+        <h1>Offerte</h1>
+        <button class="a-btn" onclick="openOfferModal()"><i class="ti ti-plus"></i> Nuova offerta</button>
+      </div>
+      <div class="a-table-wrap">
+        <table class="a-table">
+          <thead>
+            <tr><th>Nome</th><th>Categoria</th><th>Prezzo</th><th>Attiva</th><th>Ordine</th><th></th></tr>
+          </thead>
+          <tbody id="offers-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- TAB: EVENTI -->
+    <div id="tab-events" class="tab-panel hidden">
+      <div class="panel-head">
+        <h1>Eventi</h1>
+        <button class="a-btn" onclick="openOfferModal('evento')"><i class="ti ti-plus"></i> Nuovo evento</button>
+      </div>
+      <div class="a-table-wrap">
+        <table class="a-table">
+          <thead>
+            <tr><th>Nome</th><th>Tag</th><th>Prezzo</th><th>Attivo</th><th>Ordine</th><th></th></tr>
+          </thead>
+          <tbody id="events-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- TAB: PUSH -->
+    <div id="tab-push" class="tab-panel hidden">
+      <div class="panel-head"><h1>Notifiche Push</h1></div>
+      <div class="push-form">
+        <div class="form-group">
+          <label>Titolo</label>
+          <input type="text" id="push-title" class="a-input" placeholder="Es. Offerta speciale stasera!">
+        </div>
+        <div class="form-group">
+          <label>Messaggio</label>
+          <textarea id="push-body" class="a-input a-textarea" placeholder="Descrizione notifica..."></textarea>
+        </div>
+        <div class="form-group">
+          <label>URL (opzionale)</label>
+          <input type="text" id="push-url" class="a-input" placeholder="/">
+        </div>
+        <button class="a-btn" onclick="sendPush()"><i class="ti ti-send"></i> Invia a tutti</button>
+        <div id="push-result" class="push-result hidden"></div>
+      </div>
+    </div>
+
+    <!-- TAB: UTENTI -->
+    <div id="tab-users" class="tab-panel hidden">
+      <div class="panel-head"><h1>Utenti registrati</h1></div>
+      <div class="a-table-wrap">
+        <table class="a-table">
+          <thead>
+            <tr><th>Nome</th><th>Email</th><th>Punti</th><th>Visite</th><th>Referral</th><th>Registrato</th></tr>
+          </thead>
+          <tbody id="users-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- MODAL OFFERTA / EVENTO -->
+<div id="offer-modal" class="modal-overlay hidden" onclick="closeOfferModal(event)">
+  <div class="modal-box">
+    <div class="modal-head">
+      <h2 id="modal-title">Nuova offerta</h2>
+      <button class="modal-close" onclick="closeOfferModal()"><i class="ti ti-x"></i></button>
+    </div>
+
+    <input type="hidden" id="f-id">
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Nome *</label>
+        <input type="text" id="f-name" class="a-input" placeholder="Nome offerta">
+      </div>
+      <div class="form-group">
+        <label>Categoria *</label>
+        <select id="f-category" class="a-input">
+          <option value="drink">Drink</option>
+          <option value="food">Food</option>
+          <option value="evento">Evento</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Tag (es. 🔥 Novità)</label>
+        <input type="text" id="f-tag" class="a-input" placeholder="🔥 Novità">
+      </div>
+      <div class="form-group">
+        <label>Prezzo (es. €5 o Gratis)</label>
+        <input type="text" id="f-price" class="a-input" placeholder="€5">
+      </div>
+      <div class="form-group">
+        <label>Prezzo originale (opz.)</label>
+        <input type="text" id="f-orig" class="a-input" placeholder="€8">
+      </div>
+      <div class="form-group">
+        <label>Scadenza</label>
+        <input type="text" id="f-expiry" class="a-input" placeholder="Valido fino al 31/12/2026">
+      </div>
+      <div class="form-group form-group--full">
+        <label>Descrizione *</label>
+        <textarea id="f-desc" class="a-input a-textarea" placeholder="Descrizione dell'offerta..."></textarea>
+      </div>
+      <div class="form-group form-group--full">
+        <label>URL immagine (opz.)</label>
+        <input type="text" id="f-img" class="a-input" placeholder="https://...">
+        <div id="f-img-preview" class="img-preview hidden"></div>
+      </div>
+      <div class="form-group">
+        <label>Ordine visualizzazione</label>
+        <input type="number" id="f-order" class="a-input" value="0" min="0">
+      </div>
+      <div class="form-group form-check">
+        <label class="check-label">
+          <input type="checkbox" id="f-active" checked>
+          Offerta attiva
+        </label>
+      </div>
+    </div>
+
+    <div id="modal-err" class="a-error hidden"></div>
+    <div class="modal-actions">
+      <button class="a-btn a-btn--ghost" onclick="closeOfferModal()">Annulla</button>
+      <button class="a-btn" id="modal-save-btn" onclick="saveOffer()">Salva</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="a-toast"></div>
+
+<script src="admin.js"></script>
+</body>
+</html>
