@@ -3,7 +3,7 @@
    Parla solo con /api/auth/* — nessuna chiave nel frontend
    ================================================ */
 
-const API = 'https://club1piano.onrender.com';
+const API = 'https://offerte-uxp3.onrender.com';
 
 // Se sessione già attiva → vai all'app
 document.addEventListener('DOMContentLoaded', async () => {

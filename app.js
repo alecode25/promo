@@ -3,7 +3,7 @@
    ================================================ */
 
 // URL del backend su Render — cambia con il tuo URL
-const API = 'https://club1piano.onrender.com';
+const API = 'https://offerte-uxp3.onrender.com';
 
 // ===== STATO UTENTE =====
 let currentUser = null;
