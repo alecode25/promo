@@ -67,6 +67,7 @@ async function handleRegister() {
   const cognome = document.getElementById('reg-surname').value.trim();
   const email   = document.getElementById('reg-email').value.trim();
   const password = document.getElementById('reg-password').value;
+  const phone   = document.getElementById('reg-phone').value.trim();
   const errEl   = document.getElementById('reg-error');
   const btn     = document.getElementById('register-btn');
 
@@ -82,7 +83,7 @@ async function handleRegister() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
-      body: JSON.stringify({ nome, cognome, email, password, referred_by_code: sessionStorage.getItem('pending_ref') || null }),
+      body: JSON.stringify({ nome, cognome, email, password, phone: phone || null, referred_by_code: sessionStorage.getItem('pending_ref') || null }),
     });
     const data = await res.json();
 

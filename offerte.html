@@ -192,32 +192,29 @@
         </div>
       </div>
 
-      <!-- REFERRAL -->
-      <div class="referral-panel">
-        <div class="referral-panel-top">
-          <div class="referral-panel-icon">🎁</div>
+      <!-- INVITA UN AMICO -->
+      <div class="invite-panel">
+        <div class="invite-panel-top">
+          <div class="invite-panel-icon">🎁</div>
           <div>
-            <div class="referral-panel-title">Porta un amico</div>
-            <div class="referral-panel-sub">Ogni amico che si registra sblocca un'offerta speciale per te</div>
+            <div class="invite-panel-title">Aggiungi un amico</div>
+            <div class="invite-panel-sub">Inserisci il suo numero — se accetta, ricevi un drink omaggio</div>
           </div>
         </div>
-        <div class="referral-code-row">
-          <span class="referral-code-label">Il tuo codice:</span>
-          <span class="referral-code-val" id="referral-code-display">—</span>
+        <div class="invite-input-row">
+          <input type="tel" id="invite-phone" class="invite-phone-input" placeholder="+39 333 1234567">
+          <button class="invite-send-btn" onclick="sendInvite()"><i class="ti ti-send"></i></button>
         </div>
-        <button class="referral-share-btn" onclick="copyReferralLink()">
-          <i class="ti ti-share"></i> Condividi il tuo link
-        </button>
-        <div class="referral-count" id="referral-count-display">0 amici invitati</div>
+        <div id="invite-list" class="invite-list"></div>
       </div>
 
-      <!-- REFERRAL REWARD -->
+      <!-- REWARD (visibile se referral_count > 0) -->
       <div class="referral-reward hidden" id="referral-reward">
         <div class="referral-reward-top">
           <span class="referral-reward-badge">🎉 Offerta sbloccata</span>
         </div>
         <div class="referral-reward-name">Drink omaggio</div>
-        <div class="referral-reward-desc">Hai invitato un amico! Mostra il tuo QR al personale per riscuotere un drink omaggio.</div>
+        <div class="referral-reward-desc">Un tuo amico ha accettato! Mostra il QR al personale per riscuotere.</div>
       </div>
 
       <!-- NOTIFICHE PUSH -->
@@ -291,6 +288,21 @@
   </div>
 
   </div><!-- /app-content -->
+
+  <!-- BANNER INVITO RICEVUTO -->
+  <div id="invite-banner" class="invite-banner hidden">
+    <div class="invite-banner-body">
+      <div class="invite-banner-icon">🎁</div>
+      <div class="invite-banner-text">
+        <div class="invite-banner-title" id="invite-banner-title">Un amico ti ha invitato!</div>
+        <div class="invite-banner-sub">Se accetti, riceverà un drink omaggio</div>
+      </div>
+    </div>
+    <div class="invite-banner-actions">
+      <button class="invite-accept-btn" onclick="respondInvite('accepted')">Accetta</button>
+      <button class="invite-decline-btn" onclick="respondInvite('declined')">Rifiuta</button>
+    </div>
+  </div>
 
 </div>
 

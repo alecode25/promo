@@ -102,7 +102,7 @@ app.post('/api/auth/login', async (req, res) => {
 // AUTH — REGISTER
 // ===================================================
 app.post('/api/auth/register', async (req, res) => {
-  const { nome, cognome, email, password } = req.body;
+  const { nome, cognome, email, password, phone } = req.body;
   if (!nome || !cognome || !email || !password) return res.status(400).json({ error: 'Dati mancanti' });
   if (password.length < 8) return res.status(400).json({ error: 'Password min. 8 caratteri' });
 
@@ -114,9 +114,11 @@ app.post('/api/auth/register', async (req, res) => {
 
   if (data.user) {
     const referralCode = generateReferralCode();
+    const normalizedPhone = phone ? phone.replace(/\s+/g, '') : null;
     await sbService.from('profiles').upsert({
       id: data.user.id, nome, cognome, email, punti: 0, visite: 0, offerte_usate: 0,
       referral_code: referralCode,
+      phone: normalizedPhone,
     });
 
     // Se c'è un codice referral → incrementa il referrer
@@ -235,6 +237,107 @@ app.get('/api/admin/storage-config', requireAdmin, (req, res) => {
     anonKey: process.env.SUPABASE_ANON_KEY,
     bucket:  'offer-images',
   });
+});
+
+// ===================================================
+// INVITI
+// ===================================================
+
+// POST /api/invite  — invia invito a numero di telefono
+app.post('/api/invite', async (req, res) => {
+  const user = await getUserFromCookies(req);
+  if (!user) return res.status(401).json({ error: 'Non autenticato' });
+
+  let { friend_phone } = req.body;
+  if (!friend_phone) return res.status(400).json({ error: 'Numero mancante' });
+  friend_phone = friend_phone.replace(/\s+/g, '');
+
+  // Controlla che non si inviti se stesso
+  const myProfile = await getProfile(user.id);
+  if (myProfile?.phone === friend_phone) return res.status(400).json({ error: 'Non puoi invitare te stesso' });
+
+  // Controlla invito già inviato e pendente
+  const { data: existing } = await sbService.from('invites')
+    .select('id')
+    .eq('inviter_id', user.id)
+    .eq('friend_phone', friend_phone)
+    .eq('status', 'pending')
+    .single();
+  if (existing) return res.status(400).json({ error: 'Invito già inviato a questo numero' });
+
+  const { data, error } = await sbService.from('invites')
+    .insert({ inviter_id: user.id, friend_phone })
+    .select().single();
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ ok: true, invite: data });
+});
+
+// GET /api/invite/sent  — inviti inviati dall'utente
+app.get('/api/invite/sent', async (req, res) => {
+  const user = await getUserFromCookies(req);
+  if (!user) return res.status(401).json({ error: 'Non autenticato' });
+  const { data } = await sbService.from('invites')
+    .select('*')
+    .eq('inviter_id', user.id)
+    .order('created_at', { ascending: false });
+  res.json(data || []);
+});
+
+// GET /api/invite/pending  — inviti ricevuti per il mio numero di telefono
+app.get('/api/invite/pending', async (req, res) => {
+  const user = await getUserFromCookies(req);
+  if (!user) return res.status(401).json({ error: 'Non autenticato' });
+  const myProfile = await getProfile(user.id);
+  if (!myProfile?.phone) return res.json([]);
+
+  const { data } = await sbService.from('invites')
+    .select('id, inviter_id, created_at')
+    .eq('friend_phone', myProfile.phone)
+    .eq('status', 'pending');
+
+  if (!data?.length) return res.json([]);
+
+  // Aggiungi nome invitante
+  const withNames = await Promise.all(data.map(async inv => {
+    const { data: p } = await sbService.from('profiles').select('nome, cognome').eq('id', inv.inviter_id).single();
+    return { ...inv, inviter_name: p ? `${p.nome} ${p.cognome}`.trim() : 'Un amico' };
+  }));
+  res.json(withNames);
+});
+
+// POST /api/invite/:id/respond  — body: { action: 'accepted'|'declined' }
+app.post('/api/invite/:id/respond', async (req, res) => {
+  const user = await getUserFromCookies(req);
+  if (!user) return res.status(401).json({ error: 'Non autenticato' });
+
+  const { action } = req.body;
+  if (!['accepted', 'declined'].includes(action)) return res.status(400).json({ error: 'Azione non valida' });
+
+  const myProfile = await getProfile(user.id);
+  if (!myProfile?.phone) return res.status(400).json({ error: 'Nessun telefono nel profilo' });
+
+  // Verifica che l'invito sia per questo utente
+  const { data: invite, error: invErr } = await sbService.from('invites')
+    .select('*')
+    .eq('id', req.params.id)
+    .eq('friend_phone', myProfile.phone)
+    .eq('status', 'pending')
+    .single();
+  if (invErr || !invite) return res.status(404).json({ error: 'Invito non trovato' });
+
+  // Aggiorna stato
+  await sbService.from('invites').update({ status: action }).eq('id', invite.id);
+
+  // Se accettato → incrementa referral_count dell'invitante
+  if (action === 'accepted') {
+    const { data: inviterProfile } = await sbService.from('profiles')
+      .select('referral_count').eq('id', invite.inviter_id).single();
+    await sbService.from('profiles')
+      .update({ referral_count: (inviterProfile?.referral_count || 0) + 1 })
+      .eq('id', invite.inviter_id);
+  }
+
+  res.json({ ok: true });
 });
 
 // ===================================================

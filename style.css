@@ -1429,53 +1429,68 @@ body {
 /* ==============================
    REFERRAL
    ============================== */
-.referral-panel {
+/* ---- Invite panel ---- */
+.invite-panel {
   background: linear-gradient(135deg, rgba(255,184,0,0.08), rgba(255,184,0,0.03));
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   padding: 16px;
   margin: 0 20px 16px;
 }
-.referral-panel-top {
+.invite-panel-top {
   display: flex;
   align-items: flex-start;
   gap: 12px;
   margin-bottom: 14px;
 }
-.referral-panel-icon { font-size: 26px; line-height: 1; }
-.referral-panel-title { font-size: 15px; font-weight: 600; color: var(--text); margin-bottom: 2px; }
-.referral-panel-sub { font-size: 12px; color: var(--text-muted); line-height: 1.4; }
-.referral-code-row {
+.invite-panel-icon { font-size: 26px; line-height: 1; }
+.invite-panel-title { font-size: 15px; font-weight: 600; color: var(--text); margin-bottom: 2px; }
+.invite-panel-sub { font-size: 12px; color: var(--text-muted); line-height: 1.4; }
+.invite-input-row {
   display: flex;
-  align-items: center;
   gap: 8px;
   margin-bottom: 12px;
 }
-.referral-code-label { font-size: 12px; color: var(--text-muted); }
-.referral-code-val {
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--gold);
-  letter-spacing: 2px;
-  font-family: monospace;
+.invite-phone-input {
+  flex: 1;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  padding: 10px 12px;
+  font-size: 14px;
+  font-family: inherit;
+  outline: none;
 }
-.referral-share-btn {
-  width: 100%;
+.invite-phone-input:focus { border-color: var(--gold); }
+.invite-send-btn {
   background: var(--gold);
   color: #000;
   border: none;
   border-radius: var(--radius-sm);
-  padding: 11px;
-  font-size: 14px;
-  font-weight: 600;
+  width: 42px;
+  font-size: 16px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  margin-bottom: 10px;
+  flex-shrink: 0;
 }
-.referral-count { font-size: 12px; color: var(--text-muted); text-align: center; }
+.invite-list { display: flex; flex-direction: column; gap: 6px; }
+.invite-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 10px;
+  background: var(--surface2);
+  border-radius: 8px;
+  font-size: 13px;
+}
+.invite-phone { color: var(--text-muted); }
+.invite-status { font-size: 12px; font-weight: 600; }
+.invite-status--pending  { color: var(--gold); }
+.invite-status--accepted { color: #3ecf8e; }
+.invite-status--declined { color: #888; }
 
 .referral-reward {
   background: linear-gradient(135deg, rgba(255,184,0,0.15), rgba(255,184,0,0.05));
@@ -1525,3 +1540,54 @@ body {
   border-radius: var(--radius-lg) var(--radius-lg) 0 0;
 }
 .modal-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+/* ==============================
+   BANNER INVITO RICEVUTO
+   ============================== */
+.invite-banner {
+  position: fixed;
+  bottom: 90px;
+  left: 16px; right: 16px;
+  background: var(--surface2);
+  border: 1px solid rgba(255,184,0,0.4);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  z-index: 80;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  animation: bannerSlideUp .35s ease;
+}
+@keyframes bannerSlideUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+.invite-banner-body {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.invite-banner-icon { font-size: 30px; flex-shrink: 0; }
+.invite-banner-title { font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 2px; }
+.invite-banner-sub { font-size: 12px; color: var(--text-muted); }
+.invite-banner-actions { display: flex; gap: 8px; }
+.invite-accept-btn {
+  flex: 1;
+  background: var(--gold);
+  color: #000;
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 11px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.invite-decline-btn {
+  flex: 1;
+  background: var(--surface3);
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 11px;
+  font-size: 14px;
+  cursor: pointer;
+}

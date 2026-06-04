@@ -71,6 +71,8 @@ async function enterApp() {
     updateUI();
     registerServiceWorker();
     checkPushStatus();
+    loadInvitesSent();
+    checkPendingInvites();
   }
   renderHomeOffers();
   renderOfferList('all');
@@ -187,7 +189,7 @@ function updateUI() {
 
   setGreeting();
   generateQR();
-  updateReferralUI();
+  updateRewardUI();
 }
 
 function setText(id, val) {
@@ -450,28 +452,83 @@ function toggleTheme() {
   applyTheme(next);
 }
 
-// ===== REFERRAL =====
-function updateReferralUI() {
-  if (!userProfile) return;
-  const code  = userProfile.referral_code || '';
-  const count = userProfile.referral_count || 0;
-  const link  = `${window.location.origin}/login.html?ref=${code}`;
+// ===== INVITI =====
+let pendingInviteId = null;
 
-  setText('referral-code-display', code);
-  setText('referral-count-display', count + (count === 1 ? ' amico invitato' : ' amici invitati'));
-
-  const reward = document.getElementById('referral-reward');
-  if (reward) reward.classList.toggle('hidden', count === 0);
+async function loadInvitesSent() {
+  try {
+    const res = await fetch(API + '/api/invite/sent', { credentials: 'include' });
+    if (!res.ok) return;
+    const invites = await res.json();
+    const list = document.getElementById('invite-list');
+    if (!list) return;
+    if (!invites.length) { list.innerHTML = ''; return; }
+    list.innerHTML = invites.map(inv => {
+      const icon = inv.status === 'accepted' ? '✅' : inv.status === 'declined' ? '❌' : '⏳';
+      const label = inv.status === 'accepted' ? 'Accettato' : inv.status === 'declined' ? 'Rifiutato' : 'In attesa';
+      return `<div class="invite-item"><span class="invite-phone">${inv.friend_phone}</span><span class="invite-status invite-status--${inv.status}">${icon} ${label}</span></div>`;
+    }).join('');
+  } catch(e) {}
 }
 
-function copyReferralLink() {
-  const code = userProfile?.referral_code || '';
-  const link = `${window.location.origin}/login.html?ref=${code}`;
-  if (navigator.share) {
-    navigator.share({ title: 'Club 1 Piano', text: 'Unisciti al club e ottieni offerte esclusive!', url: link });
-  } else {
-    navigator.clipboard.writeText(link).then(() => showToast('Link copiato ✓'));
-  }
+async function checkPendingInvites() {
+  try {
+    const res = await fetch(API + '/api/invite/pending', { credentials: 'include' });
+    if (!res.ok) return;
+    const invites = await res.json();
+    if (!invites.length) return;
+    const inv = invites[0];
+    pendingInviteId = inv.id;
+    const banner = document.getElementById('invite-banner');
+    const title  = document.getElementById('invite-banner-title');
+    if (banner && title) {
+      title.textContent = `${inv.inviter_name} ti ha invitato!`;
+      banner.classList.remove('hidden');
+    }
+  } catch(e) {}
+}
+
+async function sendInvite() {
+  const input = document.getElementById('invite-phone');
+  const phone = input.value.trim();
+  if (!phone) { showToast('Inserisci un numero di telefono'); return; }
+  try {
+    const res = await fetch(API + '/api/invite', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ friend_phone: phone }),
+    });
+    const data = await res.json();
+    if (!res.ok) { showToast(data.error || 'Errore invio'); return; }
+    input.value = '';
+    showToast('Invito inviato ✓');
+    loadInvitesSent();
+  } catch(e) { showToast('Errore di rete'); }
+}
+
+async function respondInvite(action) {
+  if (!pendingInviteId) return;
+  const banner = document.getElementById('invite-banner');
+  try {
+    const res = await fetch(API + `/api/invite/${pendingInviteId}/respond`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ action }),
+    });
+    if (!res.ok) return;
+    if (banner) banner.classList.add('hidden');
+    pendingInviteId = null;
+    if (action === 'accepted') showToast('Invito accettato — grazie! 🎉');
+    else showToast('Invito rifiutato');
+  } catch(e) {}
+}
+
+function updateRewardUI() {
+  const count  = userProfile?.referral_count || 0;
+  const reward = document.getElementById('referral-reward');
+  if (reward) reward.classList.toggle('hidden', count === 0);
 }
 
 // ===== UTILS =====
