@@ -6,11 +6,12 @@
 const API = 'https://offerte-uxp3.onrender.com';
 
 // Se sessione già attiva → vai all'app
-document.addEventListener('DOMContentLoaded', async () => {
-  try {
-    const res = await fetch(API + '/api/auth/session', { credentials: 'include' });
-    if (res.ok) window.location.replace('offerte.html');
-  } catch(e) { /* server non raggiungibile, mostra form */ }
+document.addEventListener('DOMContentLoaded', () => {
+  const saved = localStorage.getItem('club1_session');
+  if (saved) {
+    try { JSON.parse(saved); window.location.replace('offerte.html'); }
+    catch(e) { localStorage.removeItem('club1_session'); }
+  }
 });
 
 // ===== TAB =====
