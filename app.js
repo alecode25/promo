@@ -48,8 +48,21 @@ function _activateScreen(screenId) {
 }
 
 // ===== AUTH =====
+function authFetch(url, opts = {}) {
+  const token = localStorage.getItem('club1_token');
+  return fetch(API + url, {
+    ...opts,
+    credentials: 'include',
+    headers: {
+      ...(opts.headers || {}),
+      ...(token ? { 'Authorization': 'Bearer ' + token } : {}),
+    },
+  });
+}
+
 async function handleLogout() {
   localStorage.removeItem('club1_session');
+  localStorage.removeItem('club1_token');
   await fetch(API + '/api/auth/logout', { method: 'POST', credentials: 'include' });
   currentUser = null;
   userProfile = null;
@@ -457,7 +470,7 @@ let pendingInviteId = null;
 
 async function loadInvitesSent() {
   try {
-    const res = await fetch(API + '/api/invite/sent', { credentials: 'include' });
+    const res = await authFetch('/api/invite/sent');
     if (!res.ok) return;
     const invites = await res.json();
     const list = document.getElementById('invite-list');
@@ -473,7 +486,7 @@ async function loadInvitesSent() {
 
 async function checkPendingInvites() {
   try {
-    const res = await fetch(API + '/api/invite/pending', { credentials: 'include' });
+    const res = await authFetch('/api/invite/pending');
     if (!res.ok) return;
     const invites = await res.json();
     if (!invites.length) return;
@@ -493,10 +506,9 @@ async function sendInvite() {
   const phone = input.value.trim();
   if (!phone) { showToast('Inserisci un numero di telefono'); return; }
   try {
-    const res = await fetch(API + '/api/invite', {
+    const res = await authFetch('/api/invite', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
       body: JSON.stringify({ friend_phone: phone }),
     });
     const data = await res.json();
@@ -511,10 +523,9 @@ async function respondInvite(action) {
   if (!pendingInviteId) return;
   const banner = document.getElementById('invite-banner');
   try {
-    const res = await fetch(API + `/api/invite/${pendingInviteId}/respond`, {
+    const res = await authFetch(`/api/invite/${pendingInviteId}/respond`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
       body: JSON.stringify({ action }),
     });
     if (!res.ok) return;

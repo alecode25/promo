@@ -62,13 +62,19 @@ function clearSessionCookies(res) {
   res.clearCookie('sb_access',  { ...COOKIE_OPTS });
   res.clearCookie('sb_refresh', { ...COOKIE_OPTS });
 }
-async function getUserFromCookies(req) {
-  const token = req.cookies.sb_access;
+async function getUserFromRequest(req) {
+  // Accetta sia cookie che Authorization: Bearer <token>
+  const authHeader = req.headers['authorization'];
+  const token = (authHeader && authHeader.startsWith('Bearer '))
+    ? authHeader.slice(7)
+    : req.cookies.sb_access;
   if (!token) return null;
   const { data: { user }, error } = await sbService.auth.getUser(token);
   if (error || !user) return null;
   return user;
 }
+// Alias per compatibilità
+const getUserFromCookies = getUserFromRequest;
 async function getProfile(userId) {
   const { data } = await sbService.from('profiles').select('*').eq('id', userId).single();
   return data;
@@ -93,8 +99,9 @@ app.post('/api/auth/login', async (req, res) => {
   setSessionCookies(res, data.session);
   const profile = await getProfile(data.user.id);
   res.json({
-    user:    { id: data.user.id, email: data.user.email },
-    profile: profile || { nome: data.user.user_metadata?.nome || 'Utente', cognome: data.user.user_metadata?.cognome || '', email: data.user.email, punti: 0, visite: 0, offerte_usate: 0 },
+    user:        { id: data.user.id, email: data.user.email },
+    profile:     profile || { nome: data.user.user_metadata?.nome || 'Utente', cognome: data.user.user_metadata?.cognome || '', email: data.user.email, punti: 0, visite: 0, offerte_usate: 0 },
+    accessToken: data.session.access_token,
   });
 });
 
@@ -142,8 +149,9 @@ app.post('/api/auth/register', async (req, res) => {
 
   if (data.session) setSessionCookies(res, data.session);
   res.json({
-    user:    { id: data.user.id, email: data.user.email },
-    profile: { nome, cognome, email, punti: 0, visite: 0, offerte_usate: 0 },
+    user:        { id: data.user.id, email: data.user.email },
+    profile:     { nome, cognome, email, punti: 0, visite: 0, offerte_usate: 0 },
+    accessToken: data.session?.access_token || null,
   });
 });
 
