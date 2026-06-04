@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>Admin — Club 1 Piano</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -25,30 +25,43 @@
 <!-- DASHBOARD -->
 <div id="admin-dashboard" class="hidden">
 
-  <aside class="sidebar">
+  <!-- MOBILE TOPBAR -->
+  <div class="mobile-topbar">
+    <button class="hamburger" onclick="toggleSidebar()" aria-label="Menu">
+      <i class="ti ti-menu-2"></i>
+    </button>
+    <div class="topbar-brand">Club 1 Piano</div>
+  </div>
+
+  <!-- SIDEBAR BACKDROP -->
+  <div class="sidebar-backdrop" id="sidebar-backdrop" onclick="closeSidebar()"></div>
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
     <div class="sidebar-brand">
       <span class="brand-dot"></span>
       Club 1 Piano
     </div>
     <nav class="sidebar-nav">
       <button class="nav-item active" data-tab="offers" onclick="switchTab('offers')">
-        <i class="ti ti-tag"></i> Offerte
+        <i class="ti ti-tag"></i> <span>Offerte</span>
       </button>
       <button class="nav-item" data-tab="events" onclick="switchTab('events')">
-        <i class="ti ti-calendar-event"></i> Eventi
+        <i class="ti ti-calendar-event"></i> <span>Eventi</span>
       </button>
       <button class="nav-item" data-tab="push" onclick="switchTab('push')">
-        <i class="ti ti-bell-ringing"></i> Notifiche Push
+        <i class="ti ti-bell-ringing"></i> <span>Notifiche Push</span>
       </button>
       <button class="nav-item" data-tab="users" onclick="switchTab('users')">
-        <i class="ti ti-users"></i> Utenti
+        <i class="ti ti-users"></i> <span>Utenti</span>
       </button>
     </nav>
     <button class="sidebar-logout" onclick="adminLogout()">
-      <i class="ti ti-logout"></i> Esci
+      <i class="ti ti-logout"></i> <span>Esci</span>
     </button>
   </aside>
 
+  <!-- MAIN -->
   <main class="dashboard-main">
 
     <!-- TAB: OFFERTE -->
@@ -129,6 +142,7 @@
     </div>
 
     <input type="hidden" id="f-id">
+
     <div class="form-grid">
       <div class="form-group">
         <label>Nome *</label>
@@ -162,11 +176,30 @@
         <label>Descrizione *</label>
         <textarea id="f-desc" class="a-input a-textarea" placeholder="Descrizione dell'offerta..."></textarea>
       </div>
+
+      <!-- IMAGE UPLOAD -->
       <div class="form-group form-group--full">
-        <label>URL immagine (opz.)</label>
-        <input type="text" id="f-img" class="a-input" placeholder="https://...">
+        <label>Immagine</label>
+
+        <!-- Drop / tap area -->
+        <div class="img-upload-area" id="img-upload-area" onclick="triggerFilePick()">
+          <i class="ti ti-photo-up img-upload-icon"></i>
+          <div class="img-upload-label">
+            <strong>Tocca per scegliere</strong> dalla galleria<br>
+            <span style="font-size:11px">o trascina qui · JPG, PNG, WEBP · max 5 MB</span>
+          </div>
+          <div class="img-upload-progress hidden" id="img-progress-wrap">
+            <div class="img-upload-progress-bar" id="img-progress-bar"></div>
+          </div>
+        </div>
+        <input type="file" id="f-img-file" accept="image/jpeg,image/png,image/webp" style="display:none">
+
+        <div class="img-upload-or">oppure</div>
+
+        <input type="text" id="f-img" class="a-input" placeholder="Incolla URL immagine...">
         <div id="f-img-preview" class="img-preview hidden"></div>
       </div>
+
       <div class="form-group">
         <label>Ordine visualizzazione</label>
         <input type="number" id="f-order" class="a-input" value="0" min="0">

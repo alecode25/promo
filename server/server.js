@@ -228,6 +228,15 @@ app.get('/api/admin/users', requireAdmin, async (req, res) => {
   res.json(data);
 });
 
+// GET /api/admin/storage-config  (per upload immagini da frontend)
+app.get('/api/admin/storage-config', requireAdmin, (req, res) => {
+  res.json({
+    url:     process.env.SUPABASE_URL,
+    anonKey: process.env.SUPABASE_ANON_KEY,
+    bucket:  'offer-images',
+  });
+});
+
 // ===================================================
 // OFFERTE
 // ===================================================
