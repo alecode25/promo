@@ -203,10 +203,10 @@ app.get('/api/admin/offers', requireAdmin, async (req, res) => {
 
 // POST /api/admin/offers
 app.post('/api/admin/offers', requireAdmin, async (req, res) => {
-  const { name, category, tag, price, original_price, expiry, description, image_url, sort_order, active } = req.body;
+  const { name, category, tag, price, original_price, expiry_date, description, image_url, sort_order, active } = req.body;
   if (!name || !description || !price || !category) return res.status(400).json({ error: 'Campi obbligatori mancanti' });
   const { data, error } = await sbService.from('offers')
-    .insert({ name, category, tag, price, original_price, expiry, description, image_url, sort_order: sort_order || 0, active: active !== false })
+    .insert({ name, category, tag, price, original_price, expiry_date: expiry_date || null, description, image_url, sort_order: sort_order || 0, active: active !== false })
     .select().single();
   if (error) return res.status(500).json({ error: error.message });
   res.json(data);
@@ -215,9 +215,9 @@ app.post('/api/admin/offers', requireAdmin, async (req, res) => {
 // PUT /api/admin/offers/:id
 app.put('/api/admin/offers/:id', requireAdmin, async (req, res) => {
   const { id } = req.params;
-  const { name, category, tag, price, original_price, expiry, description, image_url, sort_order, active } = req.body;
+  const { name, category, tag, price, original_price, expiry_date, description, image_url, sort_order, active } = req.body;
   const { data, error } = await sbService.from('offers')
-    .update({ name, category, tag, price, original_price, expiry, description, image_url, sort_order, active })
+    .update({ name, category, tag, price, original_price, expiry_date: expiry_date || null, description, image_url, sort_order, active })
     .eq('id', id).select().single();
   if (error) return res.status(500).json({ error: error.message });
   res.json(data);
@@ -236,6 +236,18 @@ app.get('/api/admin/users', requireAdmin, async (req, res) => {
   const { data, error } = await sbService.from('profiles').select('*').order('created_at', { ascending: false });
   if (error) return res.status(500).json({ error: error.message });
   res.json(data);
+});
+
+// PATCH /api/profile/phone — aggiorna numero telefono
+app.patch('/api/profile/phone', async (req, res) => {
+  const user = await getUserFromRequest(req);
+  if (!user) return res.status(401).json({ error: 'Non autenticato' });
+  const { phone } = req.body;
+  if (!phone) return res.status(400).json({ error: 'Numero mancante' });
+  const normalized = phone.replace(/\s+/g, '');
+  const { error } = await sbService.from('profiles').update({ phone: normalized }).eq('id', user.id);
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ ok: true });
 });
 
 // GET /api/admin/storage-config  (per upload immagini da frontend)
@@ -352,7 +364,12 @@ app.post('/api/invite/:id/respond', async (req, res) => {
 // OFFERTE
 // ===================================================
 app.get('/api/offers', async (req, res) => {
-  const { data, error } = await sbService.from('offers').select('*').order('sort_order');
+  const now = new Date().toISOString();
+  const { data, error } = await sbService
+    .from('offers')
+    .select('*')
+    .or(`expiry_date.is.null,expiry_date.gt.${now}`)
+    .order('sort_order');
   if (error) return res.status(500).json({ error: error.message });
   res.json(data);
 });

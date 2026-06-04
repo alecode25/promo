@@ -291,6 +291,22 @@
 
   <!-- banner invito iniettato via JS -->
 
+  <!-- PROMPT AGGIUNGI TELEFONO -->
+  <div id="phone-prompt" class="phone-prompt hidden">
+    <button class="phone-prompt-close" onclick="dismissPhonePrompt()"><i class="ti ti-x"></i></button>
+    <div class="phone-prompt-body">
+      <div class="phone-prompt-icon">📱</div>
+      <div>
+        <div class="phone-prompt-title">Aggiungi il tuo numero</div>
+        <div class="phone-prompt-sub">Serve per ricevere inviti dagli amici</div>
+      </div>
+    </div>
+    <div class="phone-prompt-row">
+      <input type="tel" id="phone-prompt-input" class="invite-phone-input" placeholder="+39 333 1234567">
+      <button class="invite-send-btn" onclick="savePhoneFromPrompt()"><i class="ti ti-check"></i></button>
+    </div>
+  </div>
+
 </div>
 
 <!-- TOAST -->

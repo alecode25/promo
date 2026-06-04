@@ -73,7 +73,7 @@
       <div class="a-table-wrap">
         <table class="a-table">
           <thead>
-            <tr><th>Nome</th><th>Categoria</th><th>Prezzo</th><th>Attiva</th><th>Ordine</th><th></th></tr>
+            <tr><th>Nome</th><th>Categoria</th><th>Prezzo</th><th>Stato</th><th>Scadenza</th><th></th></tr>
           </thead>
           <tbody id="offers-tbody"></tbody>
         </table>
@@ -89,7 +89,7 @@
       <div class="a-table-wrap">
         <table class="a-table">
           <thead>
-            <tr><th>Nome</th><th>Tag</th><th>Prezzo</th><th>Attivo</th><th>Ordine</th><th></th></tr>
+            <tr><th>Nome</th><th>Tag</th><th>Prezzo</th><th>Stato</th><th>Scadenza</th><th></th></tr>
           </thead>
           <tbody id="events-tbody"></tbody>
         </table>
@@ -169,8 +169,9 @@
         <input type="text" id="f-orig" class="a-input" placeholder="€8">
       </div>
       <div class="form-group">
-        <label>Scadenza</label>
-        <input type="text" id="f-expiry" class="a-input" placeholder="Valido fino al 31/12/2026">
+        <label>Scadenza (data e ora)</label>
+        <input type="datetime-local" id="f-expiry-date" class="a-input">
+        <span style="font-size:11px;color:var(--text-muted)">Lascia vuoto = nessuna scadenza</span>
       </div>
       <div class="form-group form-group--full">
         <label>Descrizione *</label>

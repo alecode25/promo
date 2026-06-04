@@ -86,6 +86,7 @@ async function enterApp() {
     checkPushStatus();
     loadInvitesSent();
     checkPendingInvites();
+    if (!userProfile?.phone) showPhonePrompt();
   }
   renderHomeOffers();
   renderOfferList('all');
@@ -552,6 +553,36 @@ function updateRewardUI() {
   const count  = userProfile?.referral_count || 0;
   const reward = document.getElementById('referral-reward');
   if (reward) reward.classList.toggle('hidden', count === 0);
+}
+
+// ===== PHONE PROMPT =====
+function showPhonePrompt() {
+  if (localStorage.getItem('phone_prompt_dismissed')) return;
+  const el = document.getElementById('phone-prompt');
+  if (el) el.classList.remove('hidden');
+}
+function dismissPhonePrompt() {
+  const el = document.getElementById('phone-prompt');
+  if (el) el.classList.add('hidden');
+  localStorage.setItem('phone_prompt_dismissed', '1');
+}
+async function savePhoneFromPrompt() {
+  const input = document.getElementById('phone-prompt-input');
+  const phone = input.value.trim();
+  if (!phone) { showToast('Inserisci un numero'); return; }
+  try {
+    const res = await authFetch('/api/profile/phone', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ phone }),
+    });
+    if (!res.ok) { showToast('Errore salvataggio'); return; }
+    userProfile.phone = phone.replace(/\s+/g, '');
+    const session = JSON.parse(localStorage.getItem('club1_session') || '{}');
+    if (session.profile) { session.profile.phone = userProfile.phone; localStorage.setItem('club1_session', JSON.stringify(session)); }
+    dismissPhonePrompt();
+    showToast('Numero salvato ✓');
+  } catch(e) { showToast('Errore di rete'); }
 }
 
 // ===== UTILS =====

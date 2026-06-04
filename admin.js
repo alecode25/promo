@@ -227,13 +227,22 @@ function renderOffersTable(items, tbodyId) {
     tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:24px">Nessun elemento</td></tr>';
     return;
   }
-  tbody.innerHTML = items.map(o => `
+  tbody.innerHTML = items.map(o => {
+    const expired = o.expiry_date && new Date(o.expiry_date) < new Date();
+    const expiryLabel = o.expiry_date
+      ? new Date(o.expiry_date).toLocaleString('it', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' })
+      : '—';
+    return `
     <tr>
       <td>${o.name}</td>
       <td><span class="badge badge--cat">${o.category}</span></td>
       <td>${o.price}</td>
-      <td><span class="badge ${o.active ? 'badge--on' : 'badge--off'}">${o.active ? 'Attiva' : 'Inattiva'}</span></td>
-      <td>${o.sort_order ?? 0}</td>
+      <td>
+        <span class="badge ${expired ? 'badge--off' : o.active ? 'badge--on' : 'badge--off'}">
+          ${expired ? '⏰ Scaduta' : o.active ? 'Attiva' : 'Inattiva'}
+        </span>
+      </td>
+      <td style="font-size:12px;color:var(--text-muted)">${expiryLabel}</td>
       <td>
         <div class="row-actions">
           <button class="icon-action" onclick="editOffer(${o.id})" title="Modifica"><i class="ti ti-pencil"></i></button>
@@ -241,7 +250,7 @@ function renderOffersTable(items, tbodyId) {
         </div>
       </td>
     </tr>
-  `).join('');
+  `}).join('');
 }
 
 // ============================
@@ -252,18 +261,18 @@ let editingId = null;
 function openOfferModal(defaultCategory = 'drink') {
   editingId = null;
   document.getElementById('modal-title').textContent = defaultCategory === 'evento' ? 'Nuovo evento' : 'Nuova offerta';
-  document.getElementById('f-id').value       = '';
-  document.getElementById('f-name').value     = '';
-  document.getElementById('f-category').value = defaultCategory;
-  document.getElementById('f-tag').value      = '';
-  document.getElementById('f-price').value    = '';
-  document.getElementById('f-orig').value     = '';
-  document.getElementById('f-expiry').value   = '';
-  document.getElementById('f-desc').value     = '';
-  document.getElementById('f-img').value      = '';
-  document.getElementById('f-img-file').value = '';
-  document.getElementById('f-order').value    = '0';
-  document.getElementById('f-active').checked = true;
+  document.getElementById('f-id').value          = '';
+  document.getElementById('f-name').value        = '';
+  document.getElementById('f-category').value    = defaultCategory;
+  document.getElementById('f-tag').value         = '';
+  document.getElementById('f-price').value       = '';
+  document.getElementById('f-orig').value        = '';
+  document.getElementById('f-expiry-date').value = '';
+  document.getElementById('f-desc').value        = '';
+  document.getElementById('f-img').value         = '';
+  document.getElementById('f-img-file').value    = '';
+  document.getElementById('f-order').value       = '0';
+  document.getElementById('f-active').checked    = true;
   document.getElementById('modal-err').classList.add('hidden');
   document.getElementById('modal-save-btn').textContent = 'Crea';
   setImagePreview(null);
@@ -275,17 +284,17 @@ function editOffer(id) {
   if (!o) return;
   editingId = id;
   document.getElementById('modal-title').textContent  = 'Modifica ' + (o.category === 'evento' ? 'evento' : 'offerta');
-  document.getElementById('f-id').value       = o.id;
-  document.getElementById('f-name').value     = o.name;
-  document.getElementById('f-category').value = o.category;
-  document.getElementById('f-tag').value      = o.tag || '';
-  document.getElementById('f-price').value    = o.price;
-  document.getElementById('f-orig').value     = o.original_price || '';
-  document.getElementById('f-expiry').value   = o.expiry || '';
-  document.getElementById('f-desc').value     = o.description;
-  document.getElementById('f-img').value      = o.image_url || '';
-  document.getElementById('f-order').value    = o.sort_order ?? 0;
-  document.getElementById('f-active').checked = o.active;
+  document.getElementById('f-id').value          = o.id;
+  document.getElementById('f-name').value        = o.name;
+  document.getElementById('f-category').value    = o.category;
+  document.getElementById('f-tag').value         = o.tag || '';
+  document.getElementById('f-price').value       = o.price;
+  document.getElementById('f-orig').value        = o.original_price || '';
+  document.getElementById('f-expiry-date').value = o.expiry_date ? o.expiry_date.slice(0,16) : '';
+  document.getElementById('f-desc').value        = o.description;
+  document.getElementById('f-img').value         = o.image_url || '';
+  document.getElementById('f-order').value       = o.sort_order ?? 0;
+  document.getElementById('f-active').checked    = o.active;
   document.getElementById('modal-err').classList.add('hidden');
   document.getElementById('modal-save-btn').textContent = 'Salva';
   setImagePreview(o.image_url || null);
@@ -309,7 +318,7 @@ async function saveOffer() {
     tag:            document.getElementById('f-tag').value.trim(),
     price:          document.getElementById('f-price').value.trim(),
     original_price: document.getElementById('f-orig').value.trim() || null,
-    expiry:         document.getElementById('f-expiry').value.trim() || null,
+    expiry_date:    document.getElementById('f-expiry-date').value || null,
     description:    document.getElementById('f-desc').value.trim(),
     image_url:      document.getElementById('f-img').value.trim() || null,
     sort_order:     parseInt(document.getElementById('f-order').value) || 0,
