@@ -86,7 +86,7 @@ async function enterApp() {
     checkPushStatus();
     loadInvitesSent();
     checkPendingInvites();
-    if (!userProfile?.phone) showPhonePrompt();
+    populateEditForm();
   }
   renderHomeOffers();
   renderOfferList('all');
@@ -550,38 +550,57 @@ async function respondInvite(action) {
 }
 
 function updateRewardUI() {
-  const count  = userProfile?.referral_count || 0;
-  const reward = document.getElementById('referral-reward');
-  if (reward) reward.classList.toggle('hidden', count === 0);
+  const count = parseInt(userProfile?.referral_count) || 0;
+  if (count <= 0) return;
+  if (document.getElementById('referral-reward')) return;
+  const invitePanel = document.querySelector('.invite-panel');
+  if (!invitePanel) return;
+  const el = document.createElement('div');
+  el.id = 'referral-reward';
+  el.className = 'referral-reward';
+  el.innerHTML = `
+    <div class="referral-reward-top"><span class="referral-reward-badge">🎉 Offerta sbloccata</span></div>
+    <div class="referral-reward-name">Drink omaggio</div>
+    <div class="referral-reward-desc">Un tuo amico ha accettato! Mostra il QR al personale per riscuotere.</div>
+  `;
+  invitePanel.insertAdjacentElement('afterend', el);
 }
 
-// ===== PHONE PROMPT =====
-function showPhonePrompt() {
-  if (localStorage.getItem('phone_prompt_dismissed')) return;
-  const el = document.getElementById('phone-prompt');
-  if (el) el.classList.remove('hidden');
+// ===== MODIFICA PROFILO =====
+function populateEditForm() {
+  if (!userProfile) return;
+  const nome    = document.getElementById('edit-nome');
+  const cognome = document.getElementById('edit-cognome');
+  const phone   = document.getElementById('edit-phone');
+  const email   = document.getElementById('edit-email-display');
+  if (nome)    nome.value    = userProfile.nome    || '';
+  if (cognome) cognome.value = userProfile.cognome || '';
+  if (phone)   phone.value   = userProfile.phone   || '';
+  if (email)   email.textContent = userProfile.email || '—';
 }
-function dismissPhonePrompt() {
-  const el = document.getElementById('phone-prompt');
-  if (el) el.classList.add('hidden');
-  localStorage.setItem('phone_prompt_dismissed', '1');
-}
-async function savePhoneFromPrompt() {
-  const input = document.getElementById('phone-prompt-input');
-  const phone = input.value.trim();
-  if (!phone) { showToast('Inserisci un numero'); return; }
+
+async function saveProfile() {
+  const nome    = document.getElementById('edit-nome').value.trim();
+  const cognome = document.getElementById('edit-cognome').value.trim();
+  const phone   = document.getElementById('edit-phone').value.trim();
+  if (!nome || !cognome) { showToast('Nome e cognome obbligatori'); return; }
+
   try {
-    const res = await authFetch('/api/profile/phone', {
+    const res = await authFetch('/api/profile/update', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ phone }),
+      body: JSON.stringify({ nome, cognome, phone: phone || null }),
     });
     if (!res.ok) { showToast('Errore salvataggio'); return; }
-    userProfile.phone = phone.replace(/\s+/g, '');
+    userProfile.nome    = nome;
+    userProfile.cognome = cognome;
+    userProfile.phone   = phone;
     const session = JSON.parse(localStorage.getItem('club1_session') || '{}');
-    if (session.profile) { session.profile.phone = userProfile.phone; localStorage.setItem('club1_session', JSON.stringify(session)); }
-    dismissPhonePrompt();
-    showToast('Numero salvato ✓');
+    if (session.profile) { Object.assign(session.profile, { nome, cognome, phone }); localStorage.setItem('club1_session', JSON.stringify(session)); }
+    updateUI();
+    populateEditForm();
+    goBack();
+    showToast('Profilo aggiornato ✓');
   } catch(e) { showToast('Errore di rete'); }
 }
 
@@ -590,9 +609,43 @@ function capitalize(str) {
   return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
+// ===== PULL TO REFRESH =====
+function initPullToRefresh() {
+  let startY = 0;
+  let pulling = false;
+
+  const indicator = document.createElement('div');
+  indicator.id = 'ptr-indicator';
+  indicator.innerHTML = '<div class="ptr-spinner"></div>';
+  document.getElementById('app').prepend(indicator);
+
+  document.addEventListener('touchstart', e => {
+    startY = e.touches[0].clientY;
+  }, { passive: true });
+
+  document.addEventListener('touchmove', e => {
+    const scrollEl = document.querySelector('.screen.active .scroll-content');
+    if (scrollEl && scrollEl.scrollTop > 0) return;
+    const dy = e.touches[0].clientY - startY;
+    if (dy > 60 && !pulling) {
+      pulling = true;
+      indicator.classList.add('ptr-visible');
+    }
+  }, { passive: true });
+
+  document.addEventListener('touchend', () => {
+    if (pulling) {
+      pulling = false;
+      indicator.classList.add('ptr-spinning');
+      setTimeout(() => location.reload(), 500);
+    }
+  });
+}
+
 // ===== INIT =====
 document.addEventListener('DOMContentLoaded', async () => {
   initTheme();
+  initPullToRefresh();
 
   setTimeout(async () => {
     const splash = document.getElementById('splash');

@@ -576,6 +576,114 @@ select.a-input { cursor: pointer; }
 }
 
 /* ============================
+   SCANNER (in admin)
+   ============================ */
+.admin-scanner-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  max-width: 520px;
+}
+.admin-cam-area {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  max-width: 360px;
+  background: #000;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+.admin-cam-area video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.admin-scan-frame {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 55%;
+  height: 55%;
+}
+/* re-use s-corner from scanner */
+.s-corner {
+  position: absolute;
+  width: 22px;
+  height: 22px;
+  border-color: var(--gold);
+  border-style: solid;
+  border-width: 0;
+}
+.s-corner.tl { top: 0; left: 0;     border-top-width: 2.5px; border-left-width: 2.5px;  border-radius: 4px 0 0 0; }
+.s-corner.tr { top: 0; right: 0;    border-top-width: 2.5px; border-right-width: 2.5px; border-radius: 0 4px 0 0; }
+.s-corner.bl { bottom: 0; left: 0;  border-bottom-width: 2.5px; border-left-width: 2.5px; border-radius: 0 0 0 4px; }
+.s-corner.br { bottom: 0; right: 0; border-bottom-width: 2.5px; border-right-width: 2.5px; border-radius: 0 0 4px 0; }
+
+.admin-scan-hint {
+  position: absolute;
+  bottom: 12px; left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0,0,0,0.65);
+  color: rgba(255,255,255,0.85);
+  font-size: 12px;
+  padding: 5px 14px;
+  border-radius: 20px;
+  white-space: nowrap;
+  pointer-events: none;
+  max-width: 90%;
+  text-align: center;
+}
+.admin-scan-result {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-width: 360px;
+}
+.asr-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.asr-avatar {
+  width: 46px; height: 46px;
+  background: rgba(255,184,0,0.15);
+  color: var(--gold);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; font-weight: 700;
+  flex-shrink: 0;
+}
+.asr-name  { font-size: 16px; font-weight: 700; }
+.asr-level { font-size: 12px; color: var(--gold); margin-top: 2px; }
+.asr-stats {
+  display: flex;
+  gap: 10px;
+}
+.asr-stat {
+  flex: 1;
+  background: var(--surface2);
+  border-radius: 8px;
+  padding: 10px;
+  text-align: center;
+}
+.asr-stat-val {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--gold);
+}
+.asr-stat-lbl {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+/* ============================
    MOBILE (< 768px)
    ============================ */
 @media (max-width: 767px) {

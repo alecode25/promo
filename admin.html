@@ -55,6 +55,12 @@
       <button class="nav-item" data-tab="users" onclick="switchTab('users')">
         <i class="ti ti-users"></i> <span>Utenti</span>
       </button>
+      <button class="nav-item" data-tab="scanner" onclick="switchTab('scanner')">
+        <i class="ti ti-qrcode"></i> <span>Scanner QR</span>
+      </button>
+      <button class="nav-item" data-tab="waiters" onclick="switchTab('waiters')">
+        <i class="ti ti-badge"></i> <span>Camerieri</span>
+      </button>
     </nav>
     <button class="sidebar-logout" onclick="adminLogout()">
       <i class="ti ti-logout"></i> <span>Esci</span>
@@ -127,6 +133,76 @@
           </thead>
           <tbody id="users-tbody"></tbody>
         </table>
+      </div>
+    </div>
+
+    <!-- TAB: SCANNER -->
+    <div id="tab-scanner" class="tab-panel hidden">
+      <div class="panel-head">
+        <h1>Scanner QR</h1>
+        <button class="a-btn a-btn--sm" id="admin-scan-toggle" onclick="toggleAdminScanner()">
+          <i class="ti ti-camera"></i> Avvia fotocamera
+        </button>
+      </div>
+
+      <div class="admin-scanner-wrap" id="admin-scanner-wrap">
+        <!-- camera area -->
+        <div class="admin-cam-area hidden" id="admin-cam-area">
+          <video id="admin-scan-video" autoplay muted playsinline></video>
+          <canvas id="admin-scan-canvas" style="display:none"></canvas>
+          <div class="admin-scan-frame">
+            <div class="s-corner tl"></div>
+            <div class="s-corner tr"></div>
+            <div class="s-corner bl"></div>
+            <div class="s-corner br"></div>
+          </div>
+          <div class="admin-scan-hint" id="admin-scan-hint">Punta la fotocamera sul QR dell'utente</div>
+        </div>
+
+        <!-- result panel -->
+        <div class="admin-scan-result hidden" id="admin-scan-result">
+          <div class="asr-header">
+            <div class="asr-avatar" id="asr-avatar">??</div>
+            <div>
+              <div class="asr-name" id="asr-name">—</div>
+              <div class="asr-level" id="asr-level">—</div>
+            </div>
+          </div>
+          <div class="asr-stats">
+            <div class="asr-stat"><div class="asr-stat-val" id="asr-pts">0</div><div class="asr-stat-lbl">Punti</div></div>
+            <div class="asr-stat"><div class="asr-stat-val" id="asr-visits">0</div><div class="asr-stat-lbl">Visite</div></div>
+          </div>
+          <div class="form-group">
+            <label>Importo speso (€) — opzionale</label>
+            <input type="number" id="asr-amount" class="a-input" placeholder="0" min="0" step="1">
+            <span style="font-size:11px;color:var(--text-muted)">1€ = 1 punto aggiunto al cliente</span>
+          </div>
+          <div style="display:flex;gap:10px;margin-top:4px">
+            <button class="a-btn a-btn--ghost a-btn--sm" onclick="cancelAdminScan()"><i class="ti ti-x"></i> Annulla</button>
+            <button class="a-btn a-btn--sm" id="asr-confirm-btn" onclick="confirmAdminCheckin()" style="background:var(--success);flex:1">
+              <i class="ti ti-check"></i> Conferma check-in
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: CAMERIERI -->
+    <div id="tab-waiters" class="tab-panel hidden">
+      <div class="panel-head">
+        <h1>Camerieri</h1>
+        <button class="a-btn" onclick="openWaiterModal()"><i class="ti ti-plus"></i> Nuovo cameriere</button>
+      </div>
+      <div class="a-table-wrap">
+        <table class="a-table">
+          <thead>
+            <tr><th>Nome</th><th>Username</th><th>Stato</th><th>Creato</th><th></th></tr>
+          </thead>
+          <tbody id="waiters-tbody"></tbody>
+        </table>
+      </div>
+      <div style="margin-top:14px;font-size:12px;color:var(--text-muted)">
+        I camerieri accedono a <strong style="color:var(--text)">scanner.html</strong> con le credenziali qui create — possono solo scansionare QR.
       </div>
     </div>
 
@@ -221,9 +297,39 @@
   </div>
 </div>
 
+<!-- MODAL CAMERIERE -->
+<div id="waiter-modal" class="modal-overlay hidden" onclick="closeWaiterModal(event)">
+  <div class="modal-box" style="max-width:400px">
+    <div class="modal-head">
+      <h2>Nuovo cameriere</h2>
+      <button class="modal-close" onclick="closeWaiterModal()"><i class="ti ti-x"></i></button>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:14px;margin-bottom:16px">
+      <div class="form-group">
+        <label>Nome *</label>
+        <input type="text" id="w-name" class="a-input" placeholder="Mario Rossi">
+      </div>
+      <div class="form-group">
+        <label>Username *</label>
+        <input type="text" id="w-username" class="a-input" placeholder="mario.rossi" autocomplete="off">
+      </div>
+      <div class="form-group">
+        <label>Password *</label>
+        <input type="password" id="w-password" class="a-input" placeholder="min. 6 caratteri" autocomplete="new-password">
+      </div>
+    </div>
+    <div id="waiter-modal-err" class="a-error hidden"></div>
+    <div class="modal-actions">
+      <button class="a-btn a-btn--ghost" onclick="closeWaiterModal()">Annulla</button>
+      <button class="a-btn" id="waiter-save-btn" onclick="saveWaiter()">Crea</button>
+    </div>
+  </div>
+</div>
+
 <!-- TOAST -->
 <div id="a-toast"></div>
 
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 <script src="admin.js"></script>
 </body>
 </html>

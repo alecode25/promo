@@ -45,6 +45,250 @@ async function showDashboard() {
   await loadStorageConfig();
   loadOffers();
   loadUsers();
+  loadWaiters();
+}
+
+// ============================
+// ADMIN SCANNER
+// ============================
+let adminScanVideo   = null;
+let adminScanCanvas  = null;
+let adminScanCtx     = null;
+let adminScanning    = false;
+let adminScannedUid  = null;
+
+function toggleAdminScanner() {
+  const btn      = document.getElementById('admin-scan-toggle');
+  const camArea  = document.getElementById('admin-cam-area');
+  const result   = document.getElementById('admin-scan-result');
+
+  if (adminScanning || adminScanVideo?.srcObject) {
+    stopAdminScanner();
+    btn.innerHTML = '<i class="ti ti-camera"></i> Avvia fotocamera';
+    camArea.classList.add('hidden');
+    result.classList.add('hidden');
+    return;
+  }
+
+  camArea.classList.remove('hidden');
+  result.classList.add('hidden');
+  btn.innerHTML = '<i class="ti ti-camera-off"></i> Ferma fotocamera';
+  startAdminCamera();
+}
+
+async function startAdminCamera() {
+  adminScanVideo  = document.getElementById('admin-scan-video');
+  adminScanCanvas = document.getElementById('admin-scan-canvas');
+  adminScanCtx    = adminScanCanvas.getContext('2d', { willReadFrequently: true });
+
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } },
+    });
+    adminScanVideo.srcObject = stream;
+    await adminScanVideo.play();
+    await new Promise(res => {
+      if (adminScanVideo.readyState >= 2) { res(); return; }
+      adminScanVideo.addEventListener('loadeddata', res, { once: true });
+    });
+    adminScanCanvas.width  = adminScanVideo.videoWidth  || 640;
+    adminScanCanvas.height = adminScanVideo.videoHeight || 480;
+    adminScanning = true;
+    requestAnimationFrame(adminScanLoop);
+  } catch(e) {
+    toast('Fotocamera non disponibile: ' + (e.message || 'errore'));
+    document.getElementById('admin-cam-area').classList.add('hidden');
+    document.getElementById('admin-scan-toggle').innerHTML = '<i class="ti ti-camera"></i> Avvia fotocamera';
+  }
+}
+
+function stopAdminScanner() {
+  adminScanning = false;
+  if (adminScanVideo?.srcObject) {
+    adminScanVideo.srcObject.getTracks().forEach(t => t.stop());
+    adminScanVideo.srcObject = null;
+  }
+  adminScannedUid = null;
+}
+
+function adminScanLoop() {
+  if (!adminScanning) return;
+  if (adminScanVideo.readyState >= adminScanVideo.HAVE_ENOUGH_DATA) {
+    adminScanCtx.drawImage(adminScanVideo, 0, 0, adminScanCanvas.width, adminScanCanvas.height);
+    const img  = adminScanCtx.getImageData(0, 0, adminScanCanvas.width, adminScanCanvas.height);
+    const code = jsQR(img.data, img.width, img.height, { inversionAttempts: 'dontInvert' });
+    if (code?.data?.startsWith('club1piano:')) {
+      adminScanning = false;
+      handleAdminQR(code.data);
+      return;
+    }
+  }
+  requestAnimationFrame(adminScanLoop);
+}
+
+async function handleAdminQR(qrData) {
+  const hint = document.getElementById('admin-scan-hint');
+  hint.textContent = 'QR rilevato — verifica…';
+
+  try {
+    const res  = await adminFetch('/api/scanner/validate', 'POST', { qr_data: qrData });
+    const data = await res.json();
+    if (!res.ok) {
+      toast(data.error || 'QR non valido');
+      hint.textContent = 'Punta la fotocamera sul QR dell\'utente';
+      adminScanning = true;
+      requestAnimationFrame(adminScanLoop);
+      return;
+    }
+    adminScannedUid = data.user_id;
+    showAdminScanResult(data.profile);
+  } catch(e) {
+    toast('Errore di rete');
+    hint.textContent = 'Punta la fotocamera sul QR dell\'utente';
+    adminScanning = true;
+    requestAnimationFrame(adminScanLoop);
+  }
+}
+
+function showAdminScanResult(profile) {
+  const nome    = profile.nome    || 'Utente';
+  const cognome = profile.cognome || '';
+  const full    = nome + (cognome ? ' ' + cognome : '');
+  const initials = (nome[0] || '') + (cognome[0] || '');
+  const level = (profile.punti || 0) >= 1000 ? 'Platinum' : (profile.punti || 0) >= 300 ? 'Gold' : 'Silver';
+
+  document.getElementById('asr-avatar').textContent = initials.toUpperCase() || '?';
+  document.getElementById('asr-name').textContent   = full;
+  document.getElementById('asr-level').textContent  = '✦ Membro ' + level;
+  document.getElementById('asr-pts').textContent    = profile.punti  || 0;
+  document.getElementById('asr-visits').textContent = profile.visite || 0;
+  document.getElementById('asr-amount').value = '';
+  document.getElementById('admin-scan-result').classList.remove('hidden');
+}
+
+function cancelAdminScan() {
+  adminScannedUid = null;
+  document.getElementById('admin-scan-result').classList.add('hidden');
+  document.getElementById('admin-scan-hint').textContent = 'Punta la fotocamera sul QR dell\'utente';
+  adminScanning = true;
+  requestAnimationFrame(adminScanLoop);
+}
+
+async function confirmAdminCheckin() {
+  if (!adminScannedUid) return;
+  const amount = parseFloat(document.getElementById('asr-amount').value) || 0;
+  const btn    = document.getElementById('asr-confirm-btn');
+  btn.disabled = true; btn.textContent = 'Salvataggio…';
+
+  try {
+    const res  = await adminFetch('/api/scanner/checkin', 'POST', { user_id: adminScannedUid, amount_spent: amount });
+    const data = await res.json();
+    if (!res.ok) { toast(data.error || 'Errore'); return; }
+    toast(amount > 0 ? `Check-in confermato ✓  +${Math.round(amount)} pt` : 'Check-in confermato ✓');
+    document.getElementById('admin-scan-result').classList.add('hidden');
+    adminScannedUid = null;
+    document.getElementById('admin-scan-hint').textContent = 'Punta la fotocamera sul QR dell\'utente';
+    adminScanning = true;
+    requestAnimationFrame(adminScanLoop);
+  } catch(e) {
+    toast('Errore di rete');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="ti ti-check"></i> Conferma check-in';
+  }
+}
+
+// ============================
+// WAITERS
+// ============================
+async function loadWaiters() {
+  try {
+    const res    = await adminFetch('/api/admin/waiters');
+    const waiters = await res.json();
+    const tbody  = document.getElementById('waiters-tbody');
+    if (!waiters.length) {
+      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text-muted);padding:24px">Nessun cameriere</td></tr>';
+      return;
+    }
+    tbody.innerHTML = waiters.map(w => `
+      <tr>
+        <td>${w.name}</td>
+        <td style="font-size:12px;color:var(--text-muted)">${w.username}</td>
+        <td>
+          <span class="badge ${w.active ? 'badge--on' : 'badge--off'}">
+            ${w.active ? 'Attivo' : 'Disabilitato'}
+          </span>
+        </td>
+        <td style="font-size:12px;color:var(--text-muted)">${w.created_at ? new Date(w.created_at).toLocaleDateString('it') : '—'}</td>
+        <td>
+          <div class="row-actions">
+            <button class="icon-action" onclick="toggleWaiter('${w.id}')" title="${w.active ? 'Disabilita' : 'Attiva'}">
+              <i class="ti ${w.active ? 'ti-eye-off' : 'ti-eye'}"></i>
+            </button>
+            <button class="icon-action del" onclick="deleteWaiter('${w.id}')" title="Elimina">
+              <i class="ti ti-trash"></i>
+            </button>
+          </div>
+        </td>
+      </tr>
+    `).join('');
+  } catch(e) { toast('Errore caricamento camerieri'); }
+}
+
+function openWaiterModal() {
+  document.getElementById('w-name').value     = '';
+  document.getElementById('w-username').value = '';
+  document.getElementById('w-password').value = '';
+  document.getElementById('waiter-modal-err').classList.add('hidden');
+  document.getElementById('waiter-save-btn').textContent = 'Crea';
+  document.getElementById('waiter-modal').classList.remove('hidden');
+}
+function closeWaiterModal(event) {
+  if (!event || event.target === document.getElementById('waiter-modal'))
+    document.getElementById('waiter-modal').classList.add('hidden');
+}
+
+async function saveWaiter() {
+  const name     = document.getElementById('w-name').value.trim();
+  const username = document.getElementById('w-username').value.trim();
+  const password = document.getElementById('w-password').value;
+  const err      = document.getElementById('waiter-modal-err');
+  const btn      = document.getElementById('waiter-save-btn');
+  err.classList.add('hidden');
+  if (!name || !username || !password) { showErr(err, 'Tutti i campi sono obbligatori'); return; }
+
+  btn.disabled = true; btn.textContent = 'Creazione…';
+  try {
+    const res  = await adminFetch('/api/admin/waiters', 'POST', { name, username, password });
+    const data = await res.json();
+    if (!res.ok) { showErr(err, data.error || 'Errore'); return; }
+    document.getElementById('waiter-modal').classList.add('hidden');
+    await loadWaiters();
+    toast('Cameriere creato ✓');
+  } catch(e) {
+    showErr(err, 'Errore di rete');
+  } finally {
+    btn.disabled = false; btn.textContent = 'Crea';
+  }
+}
+
+async function toggleWaiter(id) {
+  try {
+    const res  = await adminFetch(`/api/admin/waiters/${id}/toggle`, 'PATCH');
+    const data = await res.json();
+    if (!res.ok) { toast(data.error || 'Errore'); return; }
+    await loadWaiters();
+    toast(data.active ? 'Cameriere attivato ✓' : 'Cameriere disabilitato');
+  } catch(e) { toast('Errore di rete'); }
+}
+
+async function deleteWaiter(id) {
+  if (!confirm('Eliminare questo cameriere?')) return;
+  try {
+    await adminFetch(`/api/admin/waiters/${id}`, 'DELETE');
+    await loadWaiters();
+    toast('Cameriere eliminato');
+  } catch(e) { toast('Errore eliminazione'); }
 }
 
 // ============================
@@ -65,6 +309,16 @@ function closeSidebar() {
 // TABS
 // ============================
 function switchTab(tab) {
+  // Stop admin scanner if leaving scanner tab
+  if (tab !== 'scanner' && (adminScanning || adminScanVideo?.srcObject)) {
+    stopAdminScanner();
+    const camArea = document.getElementById('admin-cam-area');
+    const result  = document.getElementById('admin-scan-result');
+    if (camArea) camArea.classList.add('hidden');
+    if (result)  result.classList.add('hidden');
+    const toggleBtn = document.getElementById('admin-scan-toggle');
+    if (toggleBtn) toggleBtn.innerHTML = '<i class="ti ti-camera"></i> Avvia fotocamera';
+  }
   document.querySelectorAll('.tab-panel').forEach(p => p.classList.add('hidden'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   document.getElementById('tab-' + tab).classList.remove('hidden');
@@ -169,6 +423,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
   document.getElementById('admin-pwd').addEventListener('keydown', e => {
     if (e.key === 'Enter') adminLogin();
+  });
+
+  // Waiter modal: Enter on password
+  document.getElementById('w-password').addEventListener('keydown', e => {
+    if (e.key === 'Enter') saveWaiter();
   });
 
   // Aggiorna preview quando si incolla URL manualmente

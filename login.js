@@ -73,7 +73,7 @@ async function handleRegister() {
   const btn     = document.getElementById('register-btn');
 
   errEl.classList.add('hidden');
-  if (!nome || !cognome || !email || !password) { showError(errEl, 'Compila tutti i campi'); return; }
+  if (!nome || !cognome || !email || !password || !phone) { showError(errEl, 'Compila tutti i campi, incluso il numero'); return; }
   if (password.length < 8) { showError(errEl, 'Password min. 8 caratteri'); return; }
 
   btn.disabled = true;

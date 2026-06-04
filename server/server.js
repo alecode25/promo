@@ -245,14 +245,14 @@ app.get('/api/admin/users', requireAdmin, async (req, res) => {
   res.json(data);
 });
 
-// PATCH /api/profile/phone — aggiorna numero telefono
-app.patch('/api/profile/phone', async (req, res) => {
+// PATCH /api/profile/update — aggiorna nome, cognome, telefono
+app.patch('/api/profile/update', async (req, res) => {
   const user = await getUserFromRequest(req);
   if (!user) return res.status(401).json({ error: 'Non autenticato' });
-  const { phone } = req.body;
-  if (!phone) return res.status(400).json({ error: 'Numero mancante' });
-  const normalized = phone.replace(/\s+/g, '');
-  const { error } = await sbService.from('profiles').update({ phone: normalized }).eq('id', user.id);
+  const { nome, cognome, phone } = req.body;
+  if (!nome || !cognome) return res.status(400).json({ error: 'Nome e cognome obbligatori' });
+  const updates = { nome, cognome, phone: phone ? phone.replace(/\s+/g, '') : null };
+  const { error } = await sbService.from('profiles').update(updates).eq('id', user.id);
   if (error) return res.status(500).json({ error: error.message });
   res.json({ ok: true });
 });
@@ -440,6 +440,135 @@ app.post('/api/push/send', async (req, res) => {
     failed: results.filter(r => r.status === 'rejected').length,
     total:  subs.length,
   });
+});
+
+// ===================================================
+// SCANNER — helpers
+// ===================================================
+function hashPassword(password) {
+  const salt = crypto.randomBytes(16).toString('hex');
+  const hash = crypto.scryptSync(password, salt, 64).toString('hex');
+  return salt + ':' + hash;
+}
+function checkPassword(password, stored) {
+  try {
+    const idx  = stored.indexOf(':');
+    const salt = stored.slice(0, idx);
+    const hash = stored.slice(idx + 1);
+    const h2   = crypto.scryptSync(password, salt, 64).toString('hex');
+    return crypto.timingSafeEqual(Buffer.from(hash, 'hex'), Buffer.from(h2, 'hex'));
+  } catch { return false; }
+}
+function makeWaiterToken(waiterId) {
+  const payload = `${waiterId}:${Date.now()}`;
+  const sig     = crypto.createHmac('sha256', process.env.ADMIN_SECRET).update(payload).digest('hex');
+  return Buffer.from(`${payload}:${sig}`).toString('base64');
+}
+function verifyWaiterToken(token) {
+  try {
+    const raw  = Buffer.from(token, 'base64').toString('utf8');
+    const last = raw.lastIndexOf(':');
+    const sig  = raw.slice(last + 1);
+    const body = raw.slice(0, last);
+    const exp  = crypto.createHmac('sha256', process.env.ADMIN_SECRET).update(body).digest('hex');
+    if (sig.length !== exp.length) return null;
+    if (!crypto.timingSafeEqual(Buffer.from(sig, 'hex'), Buffer.from(exp, 'hex'))) return null;
+    return body.split(':')[0]; // UUID has no colons, safe split
+  } catch { return null; }
+}
+async function requireScanner(req, res, next) {
+  if (req.headers['x-admin-secret'] === process.env.ADMIN_SECRET) {
+    req.scannerRole = 'admin';
+    return next();
+  }
+  const auth = req.headers['authorization'];
+  if (auth?.startsWith('Bearer ')) {
+    const wid = verifyWaiterToken(auth.slice(7));
+    if (wid) {
+      const { data: w } = await sbService.from('waiters').select('name,active').eq('id', wid).single();
+      if (w?.active) { req.scannerRole = 'waiter'; req.scannerName = w.name; return next(); }
+    }
+  }
+  res.status(401).json({ error: 'Non autorizzato' });
+}
+
+// POST /api/scanner/login
+app.post('/api/scanner/login', async (req, res) => {
+  const { username, password } = req.body;
+  if (!username || !password) return res.status(400).json({ error: 'Credenziali mancanti' });
+  const { data: w } = await sbService.from('waiters').select('*').eq('username', username).eq('active', true).single();
+  if (!w) return res.status(401).json({ error: 'Credenziali errate' });
+  if (!checkPassword(password, w.password_hash)) return res.status(401).json({ error: 'Credenziali errate' });
+  res.json({ ok: true, token: makeWaiterToken(w.id), name: w.name });
+});
+
+// POST /api/scanner/validate
+app.post('/api/scanner/validate', requireScanner, async (req, res) => {
+  const { qr_data } = req.body;
+  if (!qr_data) return res.status(400).json({ error: 'QR mancante' });
+  const parts = qr_data.split(':');
+  if (parts.length !== 3 || parts[0] !== 'club1piano') return res.status(400).json({ error: 'QR non valido' });
+  const [, uid, slotStr] = parts;
+  const slot    = parseInt(slotStr, 10);
+  const nowSlot = Math.floor(Date.now() / (5 * 60 * 1000));
+  if (isNaN(slot) || Math.abs(nowSlot - slot) > 1) return res.status(400).json({ error: 'QR scaduto — chiedi all\'utente di aggiornarlo' });
+  const profile = await getProfile(uid);
+  if (!profile) return res.status(404).json({ error: 'Utente non trovato' });
+  res.json({ ok: true, user_id: uid, profile });
+});
+
+// POST /api/scanner/checkin
+app.post('/api/scanner/checkin', requireScanner, async (req, res) => {
+  const { user_id, amount_spent } = req.body;
+  if (!user_id) return res.status(400).json({ error: 'user_id mancante' });
+  const profile = await getProfile(user_id);
+  if (!profile) return res.status(404).json({ error: 'Utente non trovato' });
+  const pts       = Math.max(0, Math.round(parseFloat(amount_spent) || 0));
+  const newPunti  = (profile.punti  || 0) + pts;
+  const newVisite = (profile.visite || 0) + 1;
+  const { error } = await sbService.from('profiles').update({ punti: newPunti, visite: newVisite }).eq('id', user_id);
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ ok: true, punti: newPunti, visite: newVisite });
+});
+
+// ===================================================
+// ADMIN — CAMERIERI
+// ===================================================
+app.get('/api/admin/waiters', requireAdmin, async (req, res) => {
+  const { data, error } = await sbService.from('waiters')
+    .select('id,name,username,active,created_at')
+    .order('created_at', { ascending: false });
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data);
+});
+
+app.post('/api/admin/waiters', requireAdmin, async (req, res) => {
+  const { name, username, password } = req.body;
+  if (!name || !username || !password) return res.status(400).json({ error: 'Tutti i campi sono obbligatori' });
+  if (password.length < 6) return res.status(400).json({ error: 'Password min. 6 caratteri' });
+  const password_hash = hashPassword(password);
+  const { data, error } = await sbService.from('waiters')
+    .insert({ name, username, password_hash })
+    .select('id,name,username,active,created_at').single();
+  if (error) {
+    if (error.code === '23505') return res.status(400).json({ error: 'Username già in uso' });
+    return res.status(500).json({ error: error.message });
+  }
+  res.json(data);
+});
+
+app.patch('/api/admin/waiters/:id/toggle', requireAdmin, async (req, res) => {
+  const { data: w } = await sbService.from('waiters').select('active').eq('id', req.params.id).single();
+  if (!w) return res.status(404).json({ error: 'Non trovato' });
+  const { error } = await sbService.from('waiters').update({ active: !w.active }).eq('id', req.params.id);
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ ok: true, active: !w.active });
+});
+
+app.delete('/api/admin/waiters/:id', requireAdmin, async (req, res) => {
+  const { error } = await sbService.from('waiters').delete().eq('id', req.params.id);
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ ok: true });
 });
 
 const PORT = process.env.PORT || 3000;

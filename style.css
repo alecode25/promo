@@ -366,26 +366,62 @@ body {
 /* ========== CATEGORY GRID ========== */
 .cat-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 10px;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
   padding: 0 16px;
-  margin-bottom: 24px;
+  margin-bottom: 28px;
 }
 .cat-card {
-  background: var(--surface);
-  border: 0.5px solid var(--border);
-  border-radius: var(--radius-md);
-  padding: 14px 8px;
+  position: relative;
+  border-radius: var(--radius-lg);
+  padding: 22px 18px;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 6px;
+  gap: 10px;
   cursor: pointer;
-  transition: transform 0.15s, background 0.15s;
+  text-decoration: none;
+  overflow: hidden;
+  transition: transform .18s, box-shadow .18s;
+  border: 1px solid rgba(255,255,255,0.06);
 }
-.cat-card:active { transform: scale(0.94); background: var(--surface2); }
-.cat-icon { font-size: 24px; }
-.cat-name { font-size: 11px; color: var(--text-muted); text-align: center; }
+.cat-card:active { transform: scale(0.96); }
+
+/* Colori per categoria */
+.cat-card:nth-child(1) { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); }
+.cat-card:nth-child(2) { background: linear-gradient(135deg, #1c1206 0%, #2a1a06 100%); }
+.cat-card:nth-child(3) { background: linear-gradient(135deg, #1a0a0a 0%, #2a0f0f 100%); }
+.cat-card:nth-child(4) { background: linear-gradient(135deg, #0d1a10 0%, #132014 100%); }
+
+.cat-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: inherit;
+  opacity: 0;
+  transition: opacity .18s;
+}
+.cat-card:hover::before { opacity: 0.3; }
+
+.cat-icon {
+  font-size: 34px;
+  line-height: 1;
+  filter: drop-shadow(0 2px 8px rgba(0,0,0,0.4));
+}
+.cat-card-body {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.cat-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: -0.2px;
+}
+.cat-arrow {
+  font-size: 14px;
+  color: rgba(255,255,255,0.5);
+}
 
 /* ========== FILTER PILLS ========== */
 .filter-row {
@@ -970,7 +1006,7 @@ body {
 #splash.fade-out { opacity: 0; pointer-events: none; }
 
 .splash-logo img {
-  width: 120px;
+  width: 200px;
   filter: brightness(1.1);
 }
 .splash-logo {
@@ -1391,10 +1427,10 @@ body {
   .offer-snap-card { min-width: 205px; max-width: 205px; }
 
   /* ---- Cat grid ---- */
-  .cat-grid { padding: 0 32px; gap: 12px; }
-  .cat-card { padding: 20px 10px; }
-  .cat-icon { font-size: 28px; }
-  .cat-name { font-size: 12px; }
+  .cat-grid { padding: 0 32px; gap: 14px; }
+  .cat-card { padding: 26px 22px; }
+  .cat-icon { font-size: 40px; }
+  .cat-name { font-size: 16px; }
 
   /* ---- Filters ---- */
   .filter-row { padding: 0 32px 18px; }
@@ -1542,6 +1578,34 @@ body {
 .modal-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
 /* ==============================
+   PULL TO REFRESH
+   ============================== */
+#ptr-indicator {
+  position: fixed;
+  top: -60px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 40px; height: 40px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  z-index: 90;
+  transition: top .2s ease;
+}
+#ptr-indicator.ptr-visible { top: 16px; }
+.ptr-spinner {
+  width: 18px; height: 18px;
+  border: 2px solid rgba(255,184,0,0.3);
+  border-top-color: var(--gold);
+  border-radius: 50%;
+}
+#ptr-indicator.ptr-spinning .ptr-spinner {
+  animation: ptr-spin .5s linear infinite;
+}
+@keyframes ptr-spin { to { transform: rotate(360deg); } }
+
+/* ==============================
    BANNER INVITO RICEVUTO
    ============================== */
 .invite-banner {
@@ -1581,6 +1645,60 @@ body {
   font-weight: 700;
   cursor: pointer;
 }
+/* ==============================
+   EDIT PROFILE
+   ============================== */
+.edit-profile-wrap {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.edit-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.edit-label {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: .4px;
+}
+.edit-input {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  padding: 10px 12px;
+  font-size: 14px;
+  font-family: inherit;
+  outline: none;
+  width: 100%;
+}
+.edit-input:focus { border-color: var(--gold); }
+.edit-field--readonly .edit-input,
+.edit-readonly {
+  background: var(--surface3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  padding: 10px 12px;
+  font-size: 14px;
+}
+.edit-save-btn {
+  background: var(--gold);
+  color: #000;
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  width: 100%;
+}
+
 .phone-prompt {
   position: fixed;
   bottom: 90px;

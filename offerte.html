@@ -73,16 +73,20 @@
       </div>
       <div class="cat-grid">
         <a class="cat-card" href="https://portagalliana-clubprimopiano.com/CosaBere.html" target="_blank">
-          <div class="cat-icon">🍹</div><div class="cat-name">Drink</div>
+          <div class="cat-icon">🍹</div>
+          <div class="cat-card-body"><div class="cat-name">Drink</div><div class="cat-arrow">→</div></div>
         </a>
         <a class="cat-card" href="https://www.portagalliana-clubprimopiano.com/panini.html" target="_blank">
-          <div class="cat-icon">🍔</div><div class="cat-name">Burger</div>
+          <div class="cat-icon">🍔</div>
+          <div class="cat-card-body"><div class="cat-name">Burger</div><div class="cat-arrow">→</div></div>
         </a>
         <a class="cat-card" href="https://www.portagalliana-clubprimopiano.com/pizze.html" target="_blank">
-          <div class="cat-icon">🍕</div><div class="cat-name">Pizza</div>
+          <div class="cat-icon">🍕</div>
+          <div class="cat-card-body"><div class="cat-name">Pizza</div><div class="cat-arrow">→</div></div>
         </a>
         <a class="cat-card" href="https://www.portagalliana-clubprimopiano.com/piade.html" target="_blank">
-          <div class="cat-icon">🫓</div><div class="cat-name">Piadine</div>
+          <div class="cat-icon">🫓</div>
+          <div class="cat-card-body"><div class="cat-name">Piadine</div><div class="cat-arrow">→</div></div>
         </a>
       </div>
     </div>
@@ -174,23 +178,8 @@
         <div class="profile-avatar" id="acc-avatar">--</div>
         <div class="profile-name" id="acc-name">—</div>
         <div class="profile-email" id="acc-email">—</div>
-        <div class="profile-badge" id="acc-badge">✦ Membro Silver</div>
       </div>
 
-      <div class="stats-trio">
-        <div class="stat-card">
-          <div class="stat-num" id="stat-pts">0</div>
-          <div class="stat-lbl">Punti</div>
-        </div>
-        <div class="stat-card stat-card--mid">
-          <div class="stat-num" id="stat-visits">0</div>
-          <div class="stat-lbl">Visite</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-num" id="stat-used">0</div>
-          <div class="stat-lbl">Usate</div>
-        </div>
-      </div>
 
       <!-- INVITA UN AMICO -->
       <div class="invite-panel">
@@ -208,14 +197,7 @@
         <div id="invite-list" class="invite-list"></div>
       </div>
 
-      <!-- REWARD (visibile se referral_count > 0) -->
-      <div class="referral-reward hidden" id="referral-reward">
-        <div class="referral-reward-top">
-          <span class="referral-reward-badge">🎉 Offerta sbloccata</span>
-        </div>
-        <div class="referral-reward-name">Drink omaggio</div>
-        <div class="referral-reward-desc">Un tuo amico ha accettato! Mostra il QR al personale per riscuotere.</div>
-      </div>
+      <!-- reward iniettato via JS -->
 
       <!-- NOTIFICHE PUSH -->
       <div class="notif-panel" id="notif-panel">
@@ -231,22 +213,22 @@
 
       <div class="menu-section-title">Il mio profilo</div>
       <div class="menu-list">
+        <button class="menu-row" onclick="goTo('screen-edit-profile')">
+          <div class="menu-icon"><i class="ti ti-user-edit"></i></div>
+          <div class="menu-label">Modifica profilo</div>
+          <i class="ti ti-chevron-right menu-arrow"></i>
+        </button>
         <button class="menu-row" onclick="goTo('screen-offerte')">
           <div class="menu-icon"><i class="ti ti-ticket"></i></div>
           <div class="menu-label">Le mie offerte</div>
           <i class="ti ti-chevron-right menu-arrow"></i>
         </button>
-        <button class="menu-row" onclick="showToast('Storico in arrivo')">
-          <div class="menu-icon"><i class="ti ti-history"></i></div>
-          <div class="menu-label">Storico visite</div>
-          <i class="ti ti-chevron-right menu-arrow"></i>
-        </button>
-        <button class="menu-row" onclick="window.open('https://www.portagalliana-clubprimopiano.com/#prenota','_blank')">
+        <button class="menu-row" onclick="window.open('https://www.portagalliana-clubprimopiano.com/index.html#Prenotazioni','_blank')">
           <div class="menu-icon"><i class="ti ti-calendar-event"></i></div>
           <div class="menu-label">Prenotazioni</div>
           <i class="ti ti-chevron-right menu-arrow"></i>
         </button>
-        <button class="menu-row" onclick="showToast('Premi in arrivo')">
+        <button class="menu-row" onclick="showToast('Ci stiamo lavorando 🛠️')">
           <div class="menu-icon"><i class="ti ti-gift"></i></div>
           <div class="menu-label">Premi e vantaggi</div>
           <i class="ti ti-chevron-right menu-arrow"></i>
@@ -287,25 +269,40 @@
     </div>
   </div>
 
+  <!-- ===== SCREEN: MODIFICA PROFILO ===== -->
+  <div id="screen-edit-profile" class="screen">
+    <div class="topbar">
+      <button class="back-btn" onclick="goBack()"><i class="ti ti-arrow-left"></i></button>
+      <div class="topbar-center-title">Modifica profilo</div>
+      <div style="width:38px"></div>
+    </div>
+    <div class="scroll-content">
+      <div class="edit-profile-wrap">
+        <div class="edit-field">
+          <label class="edit-label">Nome</label>
+          <input type="text" id="edit-nome" class="edit-input" placeholder="Nome" autocomplete="given-name">
+        </div>
+        <div class="edit-field">
+          <label class="edit-label">Cognome</label>
+          <input type="text" id="edit-cognome" class="edit-input" placeholder="Cognome" autocomplete="family-name">
+        </div>
+        <div class="edit-field">
+          <label class="edit-label">Telefono</label>
+          <input type="tel" id="edit-phone" class="edit-input" placeholder="+39 333 1234567" autocomplete="tel">
+        </div>
+        <div class="edit-field edit-field--readonly">
+          <label class="edit-label">Email (non modificabile)</label>
+          <div class="edit-readonly" id="edit-email-display">—</div>
+        </div>
+        <button class="edit-save-btn" onclick="saveProfile()">Salva modifiche</button>
+      </div>
+    </div>
+  </div>
+
   </div><!-- /app-content -->
 
   <!-- banner invito iniettato via JS -->
 
-  <!-- PROMPT AGGIUNGI TELEFONO -->
-  <div id="phone-prompt" class="phone-prompt hidden">
-    <button class="phone-prompt-close" onclick="dismissPhonePrompt()"><i class="ti ti-x"></i></button>
-    <div class="phone-prompt-body">
-      <div class="phone-prompt-icon">📱</div>
-      <div>
-        <div class="phone-prompt-title">Aggiungi il tuo numero</div>
-        <div class="phone-prompt-sub">Serve per ricevere inviti dagli amici</div>
-      </div>
-    </div>
-    <div class="phone-prompt-row">
-      <input type="tel" id="phone-prompt-input" class="invite-phone-input" placeholder="+39 333 1234567">
-      <button class="invite-send-btn" onclick="savePhoneFromPrompt()"><i class="ti ti-check"></i></button>
-    </div>
-  </div>
 
 </div>
 
