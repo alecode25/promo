@@ -19,10 +19,17 @@ function generateReferralCode() {
 const app  = express();
 const PROD = process.env.NODE_ENV === 'production';
 
-// ===== CORS — accetta richieste solo dal tuo dominio =====
+// ===== CORS =====
+const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGIN || '').split(',').map(o => o.trim()).filter(Boolean);
+const LOCAL_ORIGIN    = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/;
 app.use(cors({
-  origin:      process.env.ALLOWED_ORIGIN,   // es. https://tuosito.it
-  credentials: true,                          // necessario per i cookie
+  origin: (origin, cb) => {
+    if (!origin) return cb(null, true);                    // Postman / curl
+    if (ALLOWED_ORIGINS.includes(origin)) return cb(null, true);
+    if (LOCAL_ORIGIN.test(origin)) return cb(null, true); // qualsiasi porta locale
+    cb(new Error('CORS: origine non autorizzata'));
+  },
+  credentials: true,
 }));
 
 app.use(express.json());
