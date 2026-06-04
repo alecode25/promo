@@ -12,6 +12,12 @@ document.addEventListener('DOMContentLoaded', () => {
     try { JSON.parse(saved); window.location.replace('offerte.html'); }
     catch(e) { localStorage.removeItem('club1_session'); }
   }
+  // Cattura codice referral dall'URL
+  const ref = new URLSearchParams(window.location.search).get('ref');
+  if (ref) {
+    sessionStorage.setItem('pending_ref', ref.toUpperCase());
+    switchTab('register');
+  }
 });
 
 // ===== TAB =====
@@ -76,11 +82,12 @@ async function handleRegister() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
-      body: JSON.stringify({ nome, cognome, email, password }),
+      body: JSON.stringify({ nome, cognome, email, password, referred_by_code: sessionStorage.getItem('pending_ref') || null }),
     });
     const data = await res.json();
 
     if (!res.ok) { showError(errEl, data.error || 'Errore di registrazione'); return; }
+    sessionStorage.removeItem('pending_ref');
     localStorage.setItem('club1_session', JSON.stringify(data));
     window.location.replace('offerte.html');
   } catch(e) {

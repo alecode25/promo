@@ -9,7 +9,12 @@ const express          = require('express');
 const cookieParser     = require('cookie-parser');
 const cors             = require('cors');
 const webpush          = require('web-push');
+const crypto           = require('crypto');
 const { createClient } = require('@supabase/supabase-js');
+
+function generateReferralCode() {
+  return crypto.randomBytes(4).toString('hex').toUpperCase();
+}
 
 const app  = express();
 const PROD = process.env.NODE_ENV === 'production';
@@ -108,9 +113,29 @@ app.post('/api/auth/register', async (req, res) => {
   if (error) return res.status(400).json({ error: tradErr(error.message) });
 
   if (data.user) {
+    const referralCode = generateReferralCode();
     await sbService.from('profiles').upsert({
       id: data.user.id, nome, cognome, email, punti: 0, visite: 0, offerte_usate: 0,
+      referral_code: referralCode,
     });
+
+    // Se c'è un codice referral → incrementa il referrer
+    const { referred_by_code } = req.body;
+    if (referred_by_code) {
+      const { data: referrer } = await sbService
+        .from('profiles')
+        .select('id, referral_count')
+        .eq('referral_code', referred_by_code.toUpperCase())
+        .single();
+      if (referrer) {
+        await sbService.from('profiles')
+          .update({ referral_count: (referrer.referral_count || 0) + 1 })
+          .eq('id', referrer.id);
+        await sbService.from('profiles')
+          .update({ referred_by: referrer.id })
+          .eq('id', data.user.id);
+      }
+    }
   }
 
   if (data.session) setSessionCookies(res, data.session);

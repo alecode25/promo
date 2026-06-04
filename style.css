@@ -1420,4 +1420,108 @@ body {
 
   /* ---- Modal ---- */
   .modal-card { max-width: 580px; }
+
+  /* ---- Referral ---- */
+  .referral-panel { margin: 0 32px 16px; }
+  .referral-reward { margin: 0 32px 24px; }
 }
+
+/* ==============================
+   REFERRAL
+   ============================== */
+.referral-panel {
+  background: linear-gradient(135deg, rgba(255,184,0,0.08), rgba(255,184,0,0.03));
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  margin: 0 20px 16px;
+}
+.referral-panel-top {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.referral-panel-icon { font-size: 26px; line-height: 1; }
+.referral-panel-title { font-size: 15px; font-weight: 600; color: var(--text); margin-bottom: 2px; }
+.referral-panel-sub { font-size: 12px; color: var(--text-muted); line-height: 1.4; }
+.referral-code-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.referral-code-label { font-size: 12px; color: var(--text-muted); }
+.referral-code-val {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--gold);
+  letter-spacing: 2px;
+  font-family: monospace;
+}
+.referral-share-btn {
+  width: 100%;
+  background: var(--gold);
+  color: #000;
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 11px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+.referral-count { font-size: 12px; color: var(--text-muted); text-align: center; }
+
+.referral-reward {
+  background: linear-gradient(135deg, rgba(255,184,0,0.15), rgba(255,184,0,0.05));
+  border: 1px solid rgba(255,184,0,0.4);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  margin: 0 20px 16px;
+}
+.referral-reward-top { margin-bottom: 8px; }
+.referral-reward-badge {
+  background: var(--gold);
+  color: #000;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 20px;
+}
+.referral-reward-name { font-size: 16px; font-weight: 700; color: var(--text); margin: 10px 0 4px; }
+.referral-reward-desc { font-size: 13px; color: var(--text-muted); line-height: 1.4; }
+
+/* ==============================
+   OFFER IMAGES
+   ============================== */
+.offer-snap-img {
+  width: calc(100% + 32px);
+  margin: -16px -16px 12px;
+  height: 120px;
+  overflow: hidden;
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+}
+.offer-snap-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+.offer-full-img {
+  width: 100%;
+  height: 160px;
+  overflow: hidden;
+  border-radius: var(--radius-sm);
+  margin-bottom: 12px;
+}
+.offer-full-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+.modal-img {
+  width: calc(100% + 48px);
+  margin: -24px -24px 16px;
+  height: 200px;
+  overflow: hidden;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+}
+.modal-img img { width: 100%; height: 100%; object-fit: cover; display: block; }

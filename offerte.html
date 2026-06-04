@@ -62,32 +62,7 @@
     </div>
 
     <div class="scroll-content">
-      <div class="hero-card" onclick="goTo('screen-qr')">
-        <div class="hero-inner">
-          <div class="hero-left">
-            <div class="hero-eyebrow">✦ Il tuo pass</div>
-            <div class="hero-title">Membro<br><span id="hero-level">Silver</span></div>
-            <div class="hero-pts-row">
-              <span class="hero-pts-num" id="hero-points">0</span>
-              <span class="hero-pts-lbl">punti Club</span>
-            </div>
-          </div>
-          <div class="hero-right">
-            <div class="mini-qr" aria-label="Apri QR">
-              <canvas id="mini-qr-canvas" width="80" height="80"></canvas>
-            </div>
-            <div class="hero-tap-hint">Tocca per aprire</div>
-          </div>
-        </div>
-        <div class="hero-progress-row">
-          <div class="hero-progress-bg">
-            <div class="hero-progress-fill" id="hero-progress-fill" style="width:0%"></div>
-          </div>
-          <div class="hero-progress-label" id="hero-progress-label">— pt al livello Gold</div>
-        </div>
-      </div>
-
-      <div class="section-head">
+<div class="section-head">
         <h2 class="section-title">Offerte per te</h2>
         <button class="section-link" onclick="goTo('screen-offerte')">Vedi tutte →</button>
       </div>
@@ -215,6 +190,34 @@
           <div class="stat-num" id="stat-used">0</div>
           <div class="stat-lbl">Usate</div>
         </div>
+      </div>
+
+      <!-- REFERRAL -->
+      <div class="referral-panel">
+        <div class="referral-panel-top">
+          <div class="referral-panel-icon">🎁</div>
+          <div>
+            <div class="referral-panel-title">Porta un amico</div>
+            <div class="referral-panel-sub">Ogni amico che si registra sblocca un'offerta speciale per te</div>
+          </div>
+        </div>
+        <div class="referral-code-row">
+          <span class="referral-code-label">Il tuo codice:</span>
+          <span class="referral-code-val" id="referral-code-display">—</span>
+        </div>
+        <button class="referral-share-btn" onclick="copyReferralLink()">
+          <i class="ti ti-share"></i> Condividi il tuo link
+        </button>
+        <div class="referral-count" id="referral-count-display">0 amici invitati</div>
+      </div>
+
+      <!-- REFERRAL REWARD -->
+      <div class="referral-reward hidden" id="referral-reward">
+        <div class="referral-reward-top">
+          <span class="referral-reward-badge">🎉 Offerta sbloccata</span>
+        </div>
+        <div class="referral-reward-name">Drink omaggio</div>
+        <div class="referral-reward-desc">Hai invitato un amico! Mostra il tuo QR al personale per riscuotere un drink omaggio.</div>
       </div>
 
       <!-- NOTIFICHE PUSH -->

@@ -84,15 +84,16 @@ async function loadOffers() {
     if (res.ok) {
       const data = await res.json();
       OFFERS = data.map(o => ({
-        id:       o.id,
-        category: o.category,
-        tag:      o.tag,
-        name:     o.name,
-        desc:     o.description,
-        price:    o.price,
-        orig:     o.original_price,
-        expiry:   o.expiry,
-        active:   o.active,
+        id:        o.id,
+        category:  o.category,
+        tag:       o.tag,
+        name:      o.name,
+        desc:      o.description,
+        price:     o.price,
+        orig:      o.original_price,
+        expiry:    o.expiry,
+        active:    o.active,
+        image_url: o.image_url || null,
       }));
     }
   } catch(e) {
@@ -186,6 +187,7 @@ function updateUI() {
 
   setGreeting();
   generateQR();
+  updateReferralUI();
 }
 
 function setText(id, val) {
@@ -259,6 +261,7 @@ function renderHomeOffers() {
   const scroll = document.getElementById('offer-scroll');
   scroll.innerHTML = OFFERS.filter(o => o.active).map(o => `
     <div class="offer-snap-card" onclick="openModal(${o.id})">
+      ${o.image_url ? `<div class="offer-snap-img"><img src="${o.image_url}" alt="${o.name}" loading="lazy"></div>` : ''}
       <div class="offer-snap-tag">${o.tag}</div>
       <div class="offer-snap-badge">${capitalize(o.category)}</div>
       <div class="offer-snap-name">${o.name}</div>
@@ -275,6 +278,7 @@ function renderOfferList(filter = 'all') {
   const items = filter === 'all' ? OFFERS : OFFERS.filter(o => o.category === filter);
   list.innerHTML = items.map(o => `
     <div class="offer-full-card${o.active ? '' : ' dimmed'}"${o.active ? ` onclick="openModal(${o.id})"` : ''}>
+      ${o.image_url ? `<div class="offer-full-img"><img src="${o.image_url}" alt="${o.name}" loading="lazy"></div>` : ''}
       <div class="offer-full-top">
         <div class="offer-full-name">${o.name}</div>
         <div class="offer-full-chip">${capitalize(o.category)}</div>
@@ -308,6 +312,7 @@ function openModal(offerId) {
   const o = OFFERS.find(x => x.id === offerId);
   if (!o) return;
   document.getElementById('modal-content').innerHTML = `
+    ${o.image_url ? `<div class="modal-img"><img src="${o.image_url}" alt="${o.name}" loading="lazy"></div>` : ''}
     <div class="modal-eyebrow">${capitalize(o.category)} · ${o.tag}</div>
     <div class="modal-title">${o.name}</div>
     <div class="modal-desc">${o.desc}</div>
@@ -443,6 +448,30 @@ function toggleTheme() {
   const next = document.body.classList.contains('theme-light') ? 'dark' : 'light';
   localStorage.setItem('theme', next);
   applyTheme(next);
+}
+
+// ===== REFERRAL =====
+function updateReferralUI() {
+  if (!userProfile) return;
+  const code  = userProfile.referral_code || '';
+  const count = userProfile.referral_count || 0;
+  const link  = `${window.location.origin}/login.html?ref=${code}`;
+
+  setText('referral-code-display', code);
+  setText('referral-count-display', count + (count === 1 ? ' amico invitato' : ' amici invitati'));
+
+  const reward = document.getElementById('referral-reward');
+  if (reward) reward.classList.toggle('hidden', count === 0);
+}
+
+function copyReferralLink() {
+  const code = userProfile?.referral_code || '';
+  const link = `${window.location.origin}/login.html?ref=${code}`;
+  if (navigator.share) {
+    navigator.share({ title: 'Club 1 Piano', text: 'Unisciti al club e ottieni offerte esclusive!', url: link });
+  } else {
+    navigator.clipboard.writeText(link).then(() => showToast('Link copiato ✓'));
+  }
 }
 
 // ===== UTILS =====
