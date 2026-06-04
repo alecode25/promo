@@ -492,12 +492,24 @@ async function checkPendingInvites() {
     if (!invites.length) return;
     const inv = invites[0];
     pendingInviteId = inv.id;
-    const banner = document.getElementById('invite-banner');
-    const title  = document.getElementById('invite-banner-title');
-    if (banner && title) {
-      title.textContent = `${inv.inviter_name} ti ha invitato!`;
-      banner.classList.remove('hidden');
-    }
+    // Crea banner dinamicamente
+    const banner = document.createElement('div');
+    banner.id = 'invite-banner';
+    banner.className = 'invite-banner';
+    banner.innerHTML = `
+      <div class="invite-banner-body">
+        <div class="invite-banner-icon">🎁</div>
+        <div class="invite-banner-text">
+          <div class="invite-banner-title">${inv.inviter_name} ti ha invitato!</div>
+          <div class="invite-banner-sub">Se accetti, riceverà un drink omaggio</div>
+        </div>
+      </div>
+      <div class="invite-banner-actions">
+        <button class="invite-accept-btn" onclick="respondInvite('accepted')">Accetta</button>
+        <button class="invite-decline-btn" onclick="respondInvite('declined')">Rifiuta</button>
+      </div>
+    `;
+    document.getElementById('app').appendChild(banner);
   } catch(e) {}
 }
 
@@ -522,6 +534,7 @@ async function sendInvite() {
 async function respondInvite(action) {
   if (!pendingInviteId) return;
   const banner = document.getElementById('invite-banner');
+  if (banner) banner.remove();
   try {
     const res = await authFetch(`/api/invite/${pendingInviteId}/respond`, {
       method: 'POST',
@@ -529,7 +542,6 @@ async function respondInvite(action) {
       body: JSON.stringify({ action }),
     });
     if (!res.ok) return;
-    if (banner) banner.classList.add('hidden');
     pendingInviteId = null;
     if (action === 'accepted') showToast('Invito accettato — grazie! 🎉');
     else showToast('Invito rifiutato');
