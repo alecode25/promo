@@ -44,6 +44,7 @@ async function handleLogin() {
     const data = await res.json();
 
     if (!res.ok) { showError(errEl, data.error || 'Errore di accesso'); return; }
+    localStorage.setItem('club1_session', JSON.stringify(data));
     window.location.replace('offerte.html');
   } catch(e) {
     showError(errEl, 'Server non raggiungibile');
@@ -79,6 +80,7 @@ async function handleRegister() {
     const data = await res.json();
 
     if (!res.ok) { showError(errEl, data.error || 'Errore di registrazione'); return; }
+    localStorage.setItem('club1_session', JSON.stringify(data));
     window.location.replace('offerte.html');
   } catch(e) {
     showError(errEl, 'Server non raggiungibile');

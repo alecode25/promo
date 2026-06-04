@@ -49,6 +49,7 @@ function _activateScreen(screenId) {
 
 // ===== AUTH =====
 async function handleLogout() {
+  localStorage.removeItem('club1_session');
   await fetch(API + '/api/auth/logout', { method: 'POST', credentials: 'include' });
   currentUser = null;
   userProfile = null;
@@ -466,17 +467,17 @@ document.addEventListener('DOMContentLoaded', async () => {
       return;
     }
 
-    // Controlla sessione via server (cookie httpOnly)
-    try {
-      const res = await fetch(API + '/api/auth/session', { credentials: 'include' });
-      if (res.ok) {
-        const { user, profile } = await res.json();
+    // Controlla sessione salvata in localStorage
+    const saved = localStorage.getItem('club1_session');
+    if (saved) {
+      try {
+        const { user, profile } = JSON.parse(saved);
         currentUser = user;
         userProfile = profile;
         await enterApp();
         return;
-      }
-    } catch(e) { /* server non disponibile */ }
+      } catch(e) { localStorage.removeItem('club1_session'); }
+    }
 
     window.location.replace('login.html');
   }, 1900);
