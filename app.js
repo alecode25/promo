@@ -49,7 +49,7 @@ function _activateScreen(screenId) {
 
 // ===== AUTH =====
 async function handleLogout() {
-  await fetch(API + '/api/auth/logout', { method: 'POST' });
+  await fetch(API + '/api/auth/logout', { method: 'POST', credentials: 'include' });
   currentUser = null;
   userProfile = null;
   window.location.replace('login.html');
