@@ -297,3 +297,16 @@ body {
 @media (min-width: 900px) {
   .auth-inner { max-width: 860px; }
 }
+
+/* ===== PASSWORD TOGGLE ===== */
+.pwd-wrap { position: relative; display: flex; align-items: center; }
+.pwd-wrap .field-input { flex: 1; padding-right: 44px; }
+.pwd-eye {
+  position: absolute; right: 0; top: 50%; transform: translateY(-50%);
+  width: 40px; height: 40px;
+  background: none; border: none; cursor: pointer;
+  color: var(--text-muted, #888); font-size: 18px;
+  display: flex; align-items: center; justify-content: center;
+  transition: color .15s;
+}
+.pwd-eye:hover { color: var(--text, #fff); }

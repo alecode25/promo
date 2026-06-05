@@ -36,9 +36,8 @@
     <button class="nav-item" data-screen="screen-offerte" onclick="goTo('screen-offerte')">
       <i class="ti ti-tag"></i><span>Offerte</span>
     </button>
-    <button class="nav-item nav-qr-btn" data-screen="screen-qr" onclick="goTo('screen-qr')">
-      <div class="nav-qr-circle"><i class="ti ti-qrcode"></i></div>
-      <span class="nav-qr-label">QR Pass</span>
+    <button class="nav-item" data-screen="screen-qr" onclick="goTo('screen-qr')">
+      <i class="ti ti-qrcode"></i><span>QR Pass</span>
     </button>
     <button class="nav-item" data-screen="screen-account" onclick="goTo('screen-account')">
       <i class="ti ti-user"></i><span>Account</span>
@@ -62,7 +61,8 @@
     </div>
 
     <div class="scroll-content">
-<div class="section-head">
+
+      <div class="section-head">
         <h2 class="section-title">Offerte per te</h2>
         <button class="section-link" onclick="goTo('screen-offerte')">Vedi tutte →</button>
       </div>
@@ -112,58 +112,21 @@
 
   <!-- ===== SCREEN: QR ===== -->
   <div id="screen-qr" class="screen">
-    <div class="topbar">
-      <button class="back-btn" onclick="goBack()"><i class="ti ti-arrow-left"></i></button>
-      <div class="topbar-center-title">Il mio QR</div>
-      <div style="width:38px"></div>
-    </div>
     <div class="scroll-content qr-screen">
-      <div class="qr-card">
-        <div class="qr-card-top">
-          <div class="qr-avatar" id="qr-avatar">--</div>
-          <div>
-            <div class="qr-name" id="qr-fullname">—</div>
-            <div class="qr-level-badge" id="qr-level-badge">✦ Membro Silver</div>
-          </div>
-        </div>
 
-        <div class="qr-code-wrap">
-          <div class="qr-ring"></div>
-          <div class="qr-box" id="qr-box">
-            <canvas id="qr-canvas" width="176" height="176"></canvas>
-          </div>
-          <div class="qr-validity" id="qr-validity">Codice valido · aggiorna tra <span id="qr-timer">05:00</span></div>
+      <div class="qr-header">
+        <div class="qr-avatar" id="qr-avatar">--</div>
+        <div class="qr-header-text">
+          <div class="qr-name" id="qr-fullname">—</div>
         </div>
-
-        <div class="qr-pts-block">
-          <div class="qr-pts-row">
-            <div class="qr-pts-num" id="qr-points">0</div>
-            <div class="qr-pts-lbl">punti Club</div>
-          </div>
-          <div class="progress-bg">
-            <div class="progress-fill" id="qr-progress-fill" style="width:0%"></div>
-          </div>
-          <div class="progress-labels">
-            <span id="qr-level-label">Silver</span>
-            <span id="qr-next-label">— pt → Gold</span>
-          </div>
-        </div>
-
-        <button class="refresh-btn" id="refresh-qr" onclick="refreshQR()">
-          <i class="ti ti-refresh"></i> Aggiorna codice
-        </button>
       </div>
 
-      <div class="qr-info-cards">
-        <div class="qr-info-card">
-          <i class="ti ti-discount-2"></i>
-          <div>Mostra il QR per riscuotere le offerte attive</div>
-        </div>
-        <div class="qr-info-card">
-          <i class="ti ti-star"></i>
-          <div>Accumula 1 punto ogni €1 speso</div>
-        </div>
+      <div id="qr-offers-section"></div>
+
+      <div class="qr-offer-hint-card" id="qr-offer-hint">
+        Vai su <strong>Offerte</strong>, scegli un'offerta e premi <strong>"Usa QR"</strong> per generare il codice.
       </div>
+
     </div>
   </div>
 
@@ -332,7 +295,7 @@
 </div>
 
 <!-- QR LIB -->
-<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+<script src="/qrcode.min.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

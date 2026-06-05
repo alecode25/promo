@@ -5,6 +5,13 @@
 
 const API = 'https://offerte-uxp3.onrender.com';
 
+function togglePwd(id) {
+  const inp = document.getElementById(id);
+  const btn = inp.parentElement.querySelector('.pwd-eye i');
+  if (inp.type === 'password') { inp.type = 'text';     btn.className = 'ti ti-eye-off'; }
+  else                         { inp.type = 'password'; btn.className = 'ti ti-eye'; }
+}
+
 // Se sessione già attiva → vai all'app
 document.addEventListener('DOMContentLoaded', () => {
   const saved = localStorage.getItem('club1_session');

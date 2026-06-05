@@ -6,6 +6,7 @@
 <title>Accedi — Club 1 Piano</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,300&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
 <link rel="stylesheet" href="login.css">
 </head>
 <body>
@@ -37,7 +38,10 @@
       </div>
       <div class="field-group">
         <label class="field-label">Password</label>
-        <input type="password" id="login-password" class="field-input" placeholder="••••••••" autocomplete="current-password">
+        <div class="pwd-wrap">
+          <input type="password" id="login-password" class="field-input" placeholder="••••••••" autocomplete="current-password">
+          <button type="button" class="pwd-eye" onclick="togglePwd('login-password')" tabindex="-1" aria-label="Mostra password"><i class="ti ti-eye"></i></button>
+        </div>
       </div>
       <div id="login-error" class="auth-error hidden"></div>
       <button class="auth-cta" id="login-btn" onclick="handleLogin()">Entra</button>
@@ -63,7 +67,10 @@
       </div>
       <div class="field-group">
         <label class="field-label">Password</label>
-        <input type="password" id="reg-password" class="field-input" placeholder="Min. 8 caratteri" autocomplete="new-password">
+        <div class="pwd-wrap">
+          <input type="password" id="reg-password" class="field-input" placeholder="Min. 8 caratteri" autocomplete="new-password">
+          <button type="button" class="pwd-eye" onclick="togglePwd('reg-password')" tabindex="-1" aria-label="Mostra password"><i class="ti ti-eye"></i></button>
+        </div>
       </div>
       <div class="field-group">
         <label class="field-label">Numero di telefono *</label>

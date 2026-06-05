@@ -587,11 +587,8 @@ app.post('/api/scanner/validate', requireScanner, async (req, res) => {
   const { qr_data } = req.body;
   if (!qr_data) return res.status(400).json({ error: 'QR mancante' });
   const parts = qr_data.split(':');
-  if (parts.length !== 3 || parts[0] !== 'club1piano') return res.status(400).json({ error: 'QR non valido' });
-  const [, uid, slotStr] = parts;
-  const slot    = parseInt(slotStr, 10);
-  const nowSlot = Math.floor(Date.now() / (5 * 60 * 1000));
-  if (isNaN(slot) || Math.abs(nowSlot - slot) > 1) return res.status(400).json({ error: 'QR scaduto — chiedi all\'utente di aggiornarlo' });
+  if (parts.length !== 2 || parts[0] !== 'club1piano') return res.status(400).json({ error: 'QR non valido' });
+  const uid = parts[1];
   const profile = await getProfile(uid);
   if (!profile) return res.status(404).json({ error: 'Utente non trovato' });
   res.json({ ok: true, user_id: uid, profile });

@@ -5,6 +5,13 @@
 
 const API = 'https://offerte-uxp3.onrender.com';
 
+function togglePwd(id) {
+  const inp = document.getElementById(id);
+  const btn = inp.parentElement.querySelector('.pwd-eye i');
+  if (inp.type === 'password') { inp.type = 'text';     btn.className = 'ti ti-eye-off'; }
+  else                         { inp.type = 'password'; btn.className = 'ti ti-eye'; }
+}
+
 let waiterToken        = null;
 let waiterName         = '';
 let scannedUserId      = null;

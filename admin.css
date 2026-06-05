@@ -708,3 +708,31 @@ select.a-input { cursor: pointer; }
   .a-table { min-width: 420px; }
   .push-form { padding: 16px; }
 }
+
+.login-waiter-link {
+  margin-top: 16px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--text-muted, #888);
+}
+.login-waiter-link a {
+  color: var(--accent, #C9A84C);
+  text-decoration: none;
+  font-weight: 500;
+}
+.login-waiter-link a:hover {
+  text-decoration: underline;
+}
+
+/* ===== PASSWORD TOGGLE ===== */
+.pwd-wrap { position: relative; display: flex; align-items: center; }
+.pwd-wrap .a-input { flex: 1; padding-right: 44px; }
+.pwd-eye {
+  position: absolute; right: 0; top: 50%; transform: translateY(-50%);
+  width: 40px; height: 40px;
+  background: none; border: none; cursor: pointer;
+  color: var(--text-muted, #888); font-size: 18px;
+  display: flex; align-items: center; justify-content: center;
+  transition: color .15s;
+}
+.pwd-eye:hover { color: var(--text, #fff); }

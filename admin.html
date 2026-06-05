@@ -16,9 +16,15 @@
   <div class="login-box">
     <div class="login-logo">Club 1 Piano</div>
     <div class="login-sub">Pannello Amministratore</div>
-    <input type="password" id="admin-pwd" class="a-input" placeholder="Password admin" autocomplete="current-password">
+    <div class="pwd-wrap">
+      <input type="password" id="admin-pwd" class="a-input" placeholder="Password admin" autocomplete="current-password">
+      <button type="button" class="pwd-eye" onclick="togglePwd('admin-pwd')" tabindex="-1" aria-label="Mostra password"><i class="ti ti-eye"></i></button>
+    </div>
     <div id="login-err" class="a-error hidden"></div>
     <button class="a-btn" onclick="adminLogin()">Accedi</button>
+    <div class="login-waiter-link">
+      Sei un cameriere? <a href="scanner.html">Accedi qui</a>
+    </div>
   </div>
 </div>
 
@@ -315,7 +321,10 @@
       </div>
       <div class="form-group">
         <label>Password *</label>
-        <input type="password" id="w-password" class="a-input" placeholder="min. 6 caratteri" autocomplete="new-password">
+        <div class="pwd-wrap">
+          <input type="password" id="w-password" class="a-input" placeholder="min. 6 caratteri" autocomplete="new-password">
+          <button type="button" class="pwd-eye" onclick="togglePwd('w-password')" tabindex="-1" aria-label="Mostra password"><i class="ti ti-eye"></i></button>
+        </div>
       </div>
     </div>
     <div id="waiter-modal-err" class="a-error hidden"></div>

@@ -43,7 +43,7 @@ function _activateScreen(screenId) {
   document.querySelectorAll('.nav-item').forEach(n => {
     n.classList.toggle('active', n.dataset.screen === screenId);
   });
-  if (screenId === 'screen-qr') startQRTimer();
+  if (screenId === 'screen-qr') renderOfferQRsOnScreen();
   window.scrollTo(0, 0);
 }
 
@@ -111,6 +111,7 @@ async function loadOffers() {
         active:    o.active,
         image_url: o.image_url || null,
       }));
+      renderOfferQRsOnScreen();
     }
   } catch(e) {
     console.warn('Offerte non disponibili:', e);
@@ -187,11 +188,6 @@ function updateUI() {
 
   setText('qr-fullname', fullname);
   setText('qr-avatar', initials || '?');
-  setText('qr-level-badge', '✦ Membro ' + lv.name);
-  setText('qr-points', pts);
-  setText('qr-level-label', lv.name);
-  setText('qr-next-label', nextLabel);
-  setStyle('qr-progress-fill', 'width', pct + '%');
 
   setText('acc-avatar', initials || '?');
   setText('acc-name', fullname);
@@ -217,45 +213,20 @@ function setStyle(id, prop, val) {
 
 // ===== QR =====
 function getQRPayload() {
-  const uid  = currentUser ? currentUser.id : 'guest';
-  const slot = Math.floor(Date.now() / (5 * 60 * 1000));
-  return `club1piano:${uid}:${slot}`;
+  const uid = currentUser ? currentUser.id : 'guest';
+  return `club1piano:${uid}`;
 }
+function _makeQR(containerId, text, size) {
+  const el = document.getElementById(containerId);
+  if (!el || typeof QRCode === 'undefined') return;
+  el.innerHTML = '';
+  new QRCode(el, { text, width: size, height: size, colorDark: '#0D0D0D', colorLight: '#FFFFFF', correctLevel: QRCode.CorrectLevel.M });
+}
+
 function generateQR() {
-  const payload = getQRPayload();
-  const mainCanvas = document.getElementById('qr-canvas');
-  if (mainCanvas && typeof QRCode !== 'undefined') {
-    QRCode.toCanvas(mainCanvas, payload, { width: 176, margin: 1, color: { dark: '#0D0D0D', light: '#FFFFFF' } });
-  }
-  const miniCanvas = document.getElementById('mini-qr-canvas');
-  if (miniCanvas && typeof QRCode !== 'undefined') {
-    QRCode.toCanvas(miniCanvas, payload, { width: 80, margin: 1, color: { dark: '#0D0D0D', light: '#FFFFFF' } });
-  }
+  _makeQR('qr-box', getQRPayload(), 176);
 }
 
-let qrTimerInterval = null;
-let qrSecondsLeft   = 300;
-
-function startQRTimer() {
-  if (qrTimerInterval) clearInterval(qrTimerInterval);
-  const slotMs = 5 * 60 * 1000;
-  qrSecondsLeft = Math.ceil((slotMs - (Date.now() % slotMs)) / 1000);
-  updateTimerDisplay();
-  qrTimerInterval = setInterval(() => {
-    qrSecondsLeft--;
-    if (qrSecondsLeft <= 0) {
-      generateQR();
-      qrSecondsLeft = Math.ceil((slotMs - (Date.now() % slotMs)) / 1000);
-    }
-    updateTimerDisplay();
-  }, 1000);
-}
-function updateTimerDisplay() {
-  const m = Math.floor(qrSecondsLeft / 60);
-  const s = qrSecondsLeft % 60;
-  const val = document.getElementById('qr-validity');
-  if (val) val.innerHTML = `Codice valido · si rinnova tra <span id="qr-timer">${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}</span>`;
-}
 function refreshQR() {
   const box = document.getElementById('qr-box');
   const btn = document.getElementById('refresh-qr');
@@ -267,7 +238,6 @@ function refreshQR() {
     box.style.opacity = '1';
     btn.disabled = false;
     btn.innerHTML = '<i class="ti ti-refresh"></i> Aggiorna codice';
-    startQRTimer();
     showToast('Codice QR aggiornato ✓');
   }, 900);
 }
@@ -352,6 +322,17 @@ function useOffer(id) {
   requireAuth(() => openOfferQR(id));
 }
 
+function _ensureQRLib() {
+  if (typeof QRCode !== 'undefined') return Promise.resolve();
+  return new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = '/qrcode.min.js';
+    s.onload  = resolve;
+    s.onerror = () => reject(new Error('Libreria QR non caricata'));
+    document.head.appendChild(s);
+  });
+}
+
 async function openOfferQR(offerId) {
   const o = OFFERS.find(x => x.id === offerId);
   document.getElementById('oqr-name').textContent = o ? o.name : '—';
@@ -369,16 +350,24 @@ async function openOfferQR(offerId) {
   document.getElementById('offer-qr-overlay').classList.remove('hidden');
 
   try {
+    await _ensureQRLib();
     const res  = await authFetch(`/api/offers/${offerId}/token`, { method: 'POST', headers: { 'Content-Type': 'application/json' } });
     const data = await res.json();
     if (!res.ok) { showToast(data.error || 'Errore generazione QR'); closeOfferQR(); return; }
 
-    const canvas = document.getElementById('oqr-canvas');
-    await QRCode.toCanvas(canvas, `club1piano-offer:${data.token}`, {
-      width: 220, margin: 1, color: { dark: '#0D0D0D', light: '#FFFFFF' },
-    });
+    const qrText = `club1piano-offer:${data.token}`;
+
+    // overlay
+    const wrap = document.getElementById('oqr-canvas-wrap');
+    wrap.innerHTML = '';
+    new QRCode(wrap, { text: qrText, width: 220, height: 220, colorDark: '#0D0D0D', colorLight: '#FFFFFF', correctLevel: QRCode.CorrectLevel.M });
+
+    // salva token e aggiorna screen-qr
+    _saveOfferToken(offerId, o ? o.name : '—', data.token, o?.expiry_date || null);
+    renderOfferQRsOnScreen();
   } catch(e) {
-    showToast('Errore di rete');
+    console.error('[offerQR]', e);
+    showToast(e.message || 'Errore QR');
     closeOfferQR();
   }
 }
@@ -386,6 +375,71 @@ async function openOfferQR(offerId) {
 function closeOfferQR(event) {
   if (event && event.target !== document.getElementById('offer-qr-overlay')) return;
   document.getElementById('offer-qr-overlay').classList.add('hidden');
+}
+
+// ===== OFFER QR PERSISTENCE =====
+function _offerTokensKey() { return 'club1_offer_tokens_' + (currentUser?.id || 'guest'); }
+
+function _saveOfferToken(offerId, name, token, expiry_date) {
+  const stored = JSON.parse(localStorage.getItem(_offerTokensKey()) || '{}');
+  stored[offerId] = { name, token, expiry_date };
+  localStorage.setItem(_offerTokensKey(), JSON.stringify(stored));
+}
+
+function _removeOfferToken(offerId) {
+  const stored = JSON.parse(localStorage.getItem(_offerTokensKey()) || '{}');
+  delete stored[offerId];
+  localStorage.setItem(_offerTokensKey(), JSON.stringify(stored));
+  renderOfferQRsOnScreen();
+}
+
+function renderOfferQRsOnScreen() {
+  const section = document.getElementById('qr-offers-section');
+  const hint    = document.getElementById('qr-offer-hint');
+  if (!section) return;
+
+  const raw = JSON.parse(localStorage.getItem(_offerTokensKey()) || '{}');
+
+  // rimuovi scaduti (controlla expiry salvato + offerta corrente)
+  const now = Date.now();
+  let changed = false;
+  Object.entries(raw).forEach(([id, v]) => {
+    const offer = OFFERS.find(o => o.id == id);
+    const offerExpiry = v.expiry_date || offer?.expiry_date;
+    const gone = !offer || (offerExpiry && new Date(offerExpiry) < now) || offer?.active === false;
+    if (gone) { delete raw[id]; changed = true; }
+  });
+  if (changed) localStorage.setItem(_offerTokensKey(), JSON.stringify(raw));
+
+  const entries = Object.entries(raw);
+
+  if (!entries.length) {
+    section.innerHTML = '';
+    if (hint) hint.classList.remove('hidden');
+    return;
+  }
+
+  if (hint) hint.classList.add('hidden');
+
+  section.innerHTML = entries.map(([id, { name, token }]) => `
+    <div class="qr-offer-card" id="qr-offer-card-${id}">
+      <div class="qr-offer-card-header">
+        <div class="qr-offer-card-name"><i class="ti ti-tag"></i> ${name}</div>
+        <button class="qr-offer-card-remove" onclick="_removeOfferToken(${id})" title="Rimuovi">
+          <i class="ti ti-x"></i>
+        </button>
+      </div>
+      <div class="qr-offer-box" id="qr-offer-box-${id}"></div>
+      <div class="qr-hint">Mostra al cameriere per riscattare</div>
+    </div>
+  `).join('');
+
+  // genera QR per ogni offerta
+  if (typeof QRCode === 'undefined') return;
+  entries.forEach(([id, { token }]) => {
+    const el = document.getElementById(`qr-offer-box-${id}`);
+    if (el) new QRCode(el, { text: `club1piano-offer:${token}`, width: 176, height: 176, colorDark: '#0D0D0D', colorLight: '#FFFFFF', correctLevel: QRCode.CorrectLevel.M });
+  });
 }
 
 // ===== SERVICE WORKER =====

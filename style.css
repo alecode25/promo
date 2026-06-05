@@ -76,7 +76,6 @@ body {
 
 /* Hidden on mobile, shown on desktop via media query */
 .nav-brand    { display: none; }
-.nav-qr-label { display: none; }
 
 /* ========== SCREENS ========== */
 .screen {
@@ -545,33 +544,28 @@ body {
 }
 
 /* ========== QR SCREEN ========== */
+/* ========== QR SCREEN ========== */
 .qr-screen {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 16px 20px calc(var(--nav-h) + 24px);
+  gap: 16px;
+  padding: 28px 20px calc(var(--nav-h) + 28px);
 }
 
-.qr-card {
-  width: 100%;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  padding: 24px 20px;
-  margin-bottom: 16px;
-}
-
-.qr-card-top {
+/* Member header */
+.qr-header {
   display: flex;
   align-items: center;
   gap: 14px;
-  margin-bottom: 24px;
+  width: 100%;
 }
+.qr-header-text { display: flex; flex-direction: column; gap: 5px; }
 .qr-avatar {
   width: 52px; height: 52px;
   border-radius: 50%;
   background: linear-gradient(135deg, #2A1F05, #4A380A);
-  border: 2px solid var(--gold);
+  border: 1.5px solid var(--gold-dim);
   display: flex; align-items: center; justify-content: center;
   font-family: 'Playfair Display', serif;
   font-size: 18px;
@@ -582,89 +576,87 @@ body {
   font-family: 'Playfair Display', serif;
   font-size: 19px;
   line-height: 1;
+  color: var(--text);
 }
 .qr-level-badge {
   display: inline-block;
-  background: rgba(201,168,76,0.12);
+  background: rgba(201,168,76,0.1);
   color: var(--gold);
-  font-size: 11px;
-  padding: 3px 12px;
+  font-size: 10px;
+  padding: 3px 10px;
   border-radius: 20px;
-  border: 0.5px solid var(--gold-dim);
-  margin-top: 5px;
-  letter-spacing: 1px;
+  border: 0.5px solid rgba(201,168,76,0.25);
+  letter-spacing: 0.08em;
+  width: fit-content;
 }
 
+/* QR code area */
 .qr-code-wrap {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 28px 20px 20px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  position: relative;
-  margin-bottom: 20px;
+  gap: 12px;
 }
-.qr-ring {
-  position: absolute;
-  width: 194px; height: 194px;
-  border-radius: 16px;
-  border: 1.5px solid var(--gold-dim);
-  top: -9px; left: 50%; transform: translateX(-50%);
-  animation: qrPulse 2.4s ease-in-out infinite;
-}
-@keyframes qrPulse {
-  0%,100% { opacity: 0.5; }
-  50% { opacity: 1; box-shadow: 0 0 0 4px rgba(201,168,76,0.06); }
-}
-
 .qr-box {
-  background: white;
-  border-radius: 12px;
-  padding: 10px;
+  background: #fff;
+  border-radius: 14px;
+  padding: 12px;
   display: inline-block;
-  position: relative;
-  z-index: 1;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.35);
   transition: opacity 0.3s;
 }
-.qr-box.refreshing { opacity: 0.2; }
-
+.qr-box.refreshing { opacity: 0.15; }
+.qr-hint {
+  font-size: 12px;
+  color: var(--text-muted);
+  text-align: center;
+  letter-spacing: 0.01em;
+}
 .qr-validity {
-  margin-top: 10px;
   font-size: 12px;
   color: var(--text-muted);
   text-align: center;
 }
-.qr-validity span { color: var(--gold); font-weight: 500; }
+.qr-validity span { color: var(--gold); font-weight: 600; font-variant-numeric: tabular-nums; }
 
+/* Points block */
 .qr-pts-block {
-  background: var(--surface2);
-  border-radius: var(--radius-sm);
-  padding: 14px 16px;
-  margin-bottom: 16px;
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 16px 18px;
 }
 .qr-pts-row {
   display: flex;
   align-items: baseline;
   gap: 8px;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
 }
 .qr-pts-num {
   font-family: 'Playfair Display', serif;
-  font-size: 34px;
+  font-size: 36px;
   color: var(--gold);
   line-height: 1;
 }
 .qr-pts-lbl { font-size: 13px; color: var(--text-muted); }
-
 .progress-bg {
-  height: 6px;
+  height: 5px;
   background: var(--surface3);
   border-radius: 40px;
   overflow: hidden;
-  margin-bottom: 6px;
+  margin-bottom: 7px;
 }
 .progress-fill {
-  height: 6px;
+  height: 5px;
   border-radius: 40px;
   background: linear-gradient(90deg, var(--gold-dim), var(--gold));
+  transition: width 0.6s ease;
 }
 .progress-labels {
   display: flex;
@@ -673,41 +665,22 @@ body {
   color: var(--text-muted);
 }
 
+/* Refresh button */
 .refresh-btn {
   width: 100%;
   background: transparent;
   border: 1px solid var(--border);
-  color: var(--gold);
-  padding: 10px;
+  color: var(--text-muted);
+  padding: 11px;
   border-radius: 40px;
   font-size: 13px;
   font-family: 'DM Sans', sans-serif;
   cursor: pointer;
   display: flex; align-items: center; justify-content: center;
   gap: 6px;
-  transition: background 0.15s;
+  transition: color 0.15s, background 0.15s;
 }
-.refresh-btn:active { background: rgba(201,168,76,0.08); }
-
-.qr-info-cards {
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-.qr-info-card {
-  background: var(--surface);
-  border: 0.5px solid var(--border);
-  border-radius: var(--radius-sm);
-  padding: 12px 16px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  font-size: 13px;
-  color: var(--text-muted);
-  line-height: 1.4;
-}
-.qr-info-card i { color: var(--gold); font-size: 20px; flex-shrink: 0; }
+.refresh-btn:active { background: var(--surface2); color: var(--text); }
 
 /* ========== ACCOUNT ========== */
 .profile-hero {
@@ -885,23 +858,6 @@ body {
 .nav-item span { font-size: 10px; font-family: 'DM Sans', sans-serif; }
 .nav-item.active { color: var(--gold); }
 
-.nav-qr-btn {
-  position: relative;
-  padding: 0;
-}
-.nav-qr-circle {
-  width: 54px; height: 54px;
-  border-radius: 50%;
-  background: var(--gold);
-  display: flex; align-items: center; justify-content: center;
-  font-size: 24px;
-  color: #0D0D0D;
-  box-shadow: 0 0 0 3px var(--dark), 0 0 0 4px var(--gold-dim);
-  margin-bottom: 6px;
-  transition: transform 0.15s;
-}
-.nav-qr-btn:active .nav-qr-circle { transform: scale(0.93); }
-.nav-qr-btn.active .nav-qr-circle { box-shadow: 0 0 0 3px var(--dark), 0 0 0 4px var(--gold); }
 
 /* ========== MODAL ========== */
 .modal-overlay {
@@ -1393,22 +1349,6 @@ body {
     border: 0.5px solid rgba(255,184,0,0.18);
   }
 
-  /* QR button: flatten to regular item */
-  .nav-qr-btn { padding: 12px 14px; }
-  .nav-qr-circle {
-    width: 20px; height: 20px;
-    border-radius: 0;
-    background: transparent;
-    box-shadow: none;
-    color: inherit;
-    margin-bottom: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  .nav-qr-circle i { font-size: 20px; color: inherit; }
-  .nav-qr-btn.active .nav-qr-circle { box-shadow: none; background: transparent; }
-  .nav-qr-label { font-size: 14px; }
 
   /* ---- Topbar ---- */
   .topbar { padding: 24px 32px 16px; }
@@ -1797,4 +1737,111 @@ body {
   gap: 6px;
   margin-left: auto;
   margin-right: auto;
+}
+
+/* QR screen section labels */
+.qr-section-label {
+  width: 100%;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.qr-section-label i { font-size: 14px; color: var(--gold); }
+
+.qr-offer-hint-card {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.55;
+}
+.qr-offer-hint-card strong { color: var(--text); font-weight: 600; }
+
+/* Hero card progress */
+.hero-progress-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.hero-progress-bg {
+  flex: 1;
+  height: 4px;
+  background: rgba(201,168,76,0.15);
+  border-radius: 40px;
+  overflow: hidden;
+}
+.hero-progress-fill {
+  height: 4px;
+  border-radius: 40px;
+  background: linear-gradient(90deg, var(--gold-dim), var(--gold));
+  transition: width 0.6s ease;
+}
+.hero-progress-label {
+  font-size: 10px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* Mini QR hide duplicate img from qrcodejs */
+.mini-qr img, #qr-box img, #oqr-canvas-wrap img { display: none; }
+.mini-qr canvas { display: block; border-radius: 6px; }
+
+/* QR screen — offer cards */
+.qr-offer-card {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+.qr-offer-card-header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.qr-offer-card-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.qr-offer-card-name i { color: var(--gold); font-size: 15px; }
+.qr-offer-card-remove {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 16px;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+}
+.qr-offer-box {
+  background: #fff;
+  border-radius: 12px;
+  padding: 10px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.25);
+}
+.qr-offer-box img { display: none; }
+#qr-offers-section {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }

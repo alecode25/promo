@@ -17,7 +17,10 @@
     <div class="s-logo">Club 1 Piano</div>
     <div class="s-logo-sub">Scanner cameriere</div>
     <input type="text" id="s-username" class="s-input" placeholder="Username" autocomplete="username" inputmode="email">
-    <input type="password" id="s-password" class="s-input" placeholder="Password" autocomplete="current-password">
+    <div class="pwd-wrap">
+      <input type="password" id="s-password" class="s-input" placeholder="Password" autocomplete="current-password">
+      <button type="button" class="pwd-eye" onclick="togglePwd('s-password')" tabindex="-1" aria-label="Mostra password"><i class="ti ti-eye"></i></button>
+    </div>
     <div id="s-login-err" class="s-error hidden"></div>
     <button class="s-btn" id="s-login-btn" onclick="scannerLogin()">Accedi</button>
   </div>
