@@ -489,7 +489,7 @@ function renderOffersTable(items, tbodyId) {
   tbody.innerHTML = items.map(o => {
     const expired = o.expiry_date && new Date(o.expiry_date) < new Date();
     const expiryLabel = o.expiry_date
-      ? new Date(o.expiry_date).toLocaleString('it', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' })
+      ? new Date(o.expiry_date).toLocaleDateString('it', { day:'2-digit', month:'2-digit', year:'numeric' })
       : '—';
     return `
     <tr>
@@ -549,7 +549,14 @@ function editOffer(id) {
   document.getElementById('f-tag').value         = o.tag || '';
   document.getElementById('f-price').value       = o.price;
   document.getElementById('f-orig').value        = o.original_price || '';
-  document.getElementById('f-expiry-date').value = o.expiry_date ? o.expiry_date.slice(0,16) : '';
+  if (o.expiry_date) {
+    const d = new Date(o.expiry_date);
+    const pad = n => String(n).padStart(2,'0');
+    document.getElementById('f-expiry-date').value =
+      `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+  } else {
+    document.getElementById('f-expiry-date').value = '';
+  }
   document.getElementById('f-desc').value        = o.description;
   document.getElementById('f-img').value         = o.image_url || '';
   document.getElementById('f-order').value       = o.sort_order ?? 0;
@@ -577,7 +584,9 @@ async function saveOffer() {
     tag:            document.getElementById('f-tag').value.trim(),
     price:          document.getElementById('f-price').value.trim(),
     original_price: document.getElementById('f-orig').value.trim() || null,
-    expiry_date:    document.getElementById('f-expiry-date').value || null,
+    expiry_date:    document.getElementById('f-expiry-date').value
+                      ? new Date(document.getElementById('f-expiry-date').value + 'T23:59:59').toISOString()
+                      : null,
     description:    document.getElementById('f-desc').value.trim(),
     image_url:      document.getElementById('f-img').value.trim() || null,
     sort_order:     parseInt(document.getElementById('f-order').value) || 0,

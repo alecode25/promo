@@ -381,6 +381,80 @@ app.get('/api/offers', async (req, res) => {
   res.json(data);
 });
 
+// POST /api/offers/:id/token — genera token monouso per riscattare offerta
+app.post('/api/offers/:id/token', async (req, res) => {
+  const user = await getUserFromRequest(req);
+  if (!user) return res.status(401).json({ error: 'Non autenticato' });
+
+  const offerId = parseInt(req.params.id, 10);
+  const { data: offer } = await sbService.from('offers').select('id,name,active,expiry_date').eq('id', offerId).single();
+  if (!offer || !offer.active) return res.status(404).json({ error: 'Offerta non disponibile' });
+
+  // Riusa token già esistente non usato per questo utente+offerta
+  const { data: existing } = await sbService.from('offer_redemptions')
+    .select('token,expires_at')
+    .eq('user_id', user.id)
+    .eq('offer_id', offerId)
+    .is('used_at', null)
+    .single();
+  if (existing) return res.json({ token: existing.token, expires_at: existing.expires_at });
+
+  // expires_at = scadenza offerta oppure nessuna scadenza (anno 9999)
+  const expires_at = offer.expiry_date || '9999-12-31T23:59:59Z';
+  const token      = crypto.randomUUID();
+  const { error }  = await sbService.from('offer_redemptions')
+    .insert({ user_id: user.id, offer_id: offerId, token, expires_at });
+  if (error) return res.status(500).json({ error: error.message });
+
+  res.json({ token, expires_at });
+});
+
+// POST /api/scanner/redeem — cameriere scansiona QR offerta
+app.post('/api/scanner/redeem', requireScanner, async (req, res) => {
+  const { token } = req.body;
+  if (!token) return res.status(400).json({ error: 'Token mancante' });
+
+  const { data: redemption } = await sbService.from('offer_redemptions')
+    .select('*').eq('token', token).single();
+
+  if (!redemption) return res.status(404).json({ error: 'QR non valido' });
+  if (redemption.used_at) return res.status(409).json({ error: 'QR già utilizzato' });
+
+  const { data: offer } = await sbService.from('offers').select('name,description,price,category,expiry_date,active').eq('id', redemption.offer_id).single();
+  if (!offer || !offer.active) return res.status(404).json({ error: 'Offerta non più disponibile' });
+  if (offer.expiry_date && new Date(offer.expiry_date) < new Date()) return res.status(410).json({ error: 'Offerta scaduta' });
+  const profile           = await getProfile(redemption.user_id);
+
+  res.json({ ok: true, token, offer, user_id: redemption.user_id, profile });
+});
+
+// POST /api/scanner/confirm-redeem — conferma riscatto offerta
+app.post('/api/scanner/confirm-redeem', requireScanner, async (req, res) => {
+  const { token } = req.body;
+  if (!token) return res.status(400).json({ error: 'Token mancante' });
+
+  const { data: redemption } = await sbService.from('offer_redemptions')
+    .select('*').eq('token', token).single();
+
+  if (!redemption) return res.status(404).json({ error: 'Token non trovato' });
+  if (redemption.used_at) return res.status(409).json({ error: 'Già utilizzato' });
+
+  const { error } = await sbService.from('offer_redemptions')
+    .update({ used_at: new Date().toISOString() })
+    .eq('token', token);
+  if (error) return res.status(500).json({ error: error.message });
+
+  // Incrementa offerte_usate
+  const profile = await getProfile(redemption.user_id);
+  if (profile) {
+    await sbService.from('profiles')
+      .update({ offerte_usate: (profile.offerte_usate || 0) + 1 })
+      .eq('id', redemption.user_id);
+  }
+
+  res.json({ ok: true });
+});
+
 // ===================================================
 // PUSH — VAPID public key
 // ===================================================

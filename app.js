@@ -107,7 +107,7 @@ async function loadOffers() {
         desc:      o.description,
         price:     o.price,
         orig:      o.original_price,
-        expiry:    o.expiry,
+        expiry_date: o.expiry_date,
         active:    o.active,
         image_url: o.image_url || null,
       }));
@@ -309,7 +309,7 @@ function renderOfferList(filter = 'all') {
           ? `<button class="offer-use-btn" onclick="event.stopPropagation();openModal(${o.id})">Usa QR</button>`
           : `<span class="offer-coming-lbl">In arrivo</span>`}
       </div>
-      <div class="offer-expiry">⏱ ${o.expiry}</div>
+      ${o.expiry_date ? `<div class="offer-expiry">⏱ Scade il ${new Date(o.expiry_date).toLocaleDateString('it', {day:'2-digit',month:'2-digit',year:'numeric'})}</div>` : ''}
     </div>
   `).join('');
 }
@@ -337,7 +337,7 @@ function openModal(offerId) {
       ${o.orig && o.price !== 'Gratis' ? `<span class="modal-orig">${o.orig}</span>` : ''}
     </div>
     <button class="modal-cta" onclick="useOffer(${o.id})">Apri QR e usa l'offerta</button>
-    <div class="modal-expiry">⏱ ${o.expiry}</div>
+    ${o.expiry_date ? `<div class="modal-expiry">⏱ Scade il ${new Date(o.expiry_date).toLocaleDateString('it', {day:'2-digit',month:'2-digit',year:'numeric'})}</div>` : ''}
   `;
   document.getElementById('offer-modal').classList.remove('hidden');
 }
@@ -349,10 +349,43 @@ function closeModal(event) {
 }
 function useOffer(id) {
   document.getElementById('offer-modal').classList.add('hidden');
-  requireAuth(() => {
-    goTo('screen-qr');
-    showToast('QR pronto — mostralo al personale! ✓');
-  });
+  requireAuth(() => openOfferQR(id));
+}
+
+async function openOfferQR(offerId) {
+  const o = OFFERS.find(x => x.id === offerId);
+  document.getElementById('oqr-name').textContent = o ? o.name : '—';
+  document.getElementById('oqr-canvas-wrap').innerHTML = '<canvas id="oqr-canvas"></canvas>';
+
+  // Mostra scadenza offerta se presente
+  const timerLabel = document.getElementById('oqr-timer-label');
+  if (o && o.expiry_date) {
+    timerLabel.textContent = 'Valido fino al ' + new Date(o.expiry_date).toLocaleDateString('it', { day:'2-digit', month:'2-digit', year:'numeric' });
+    timerLabel.classList.remove('hidden');
+  } else {
+    timerLabel.classList.add('hidden');
+  }
+
+  document.getElementById('offer-qr-overlay').classList.remove('hidden');
+
+  try {
+    const res  = await authFetch(`/api/offers/${offerId}/token`, { method: 'POST', headers: { 'Content-Type': 'application/json' } });
+    const data = await res.json();
+    if (!res.ok) { showToast(data.error || 'Errore generazione QR'); closeOfferQR(); return; }
+
+    const canvas = document.getElementById('oqr-canvas');
+    await QRCode.toCanvas(canvas, `club1piano-offer:${data.token}`, {
+      width: 220, margin: 1, color: { dark: '#0D0D0D', light: '#FFFFFF' },
+    });
+  } catch(e) {
+    showToast('Errore di rete');
+    closeOfferQR();
+  }
+}
+
+function closeOfferQR(event) {
+  if (event && event.target !== document.getElementById('offer-qr-overlay')) return;
+  document.getElementById('offer-qr-overlay').classList.add('hidden');
 }
 
 // ===== SERVICE WORKER =====

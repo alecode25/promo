@@ -1734,3 +1734,67 @@ body {
   font-size: 14px;
   cursor: pointer;
 }
+
+
+/* ==============================
+   OFFER QR OVERLAY
+   ============================== */
+.offer-qr-modal {
+  text-align: center;
+  padding: 28px 24px 40px;
+}
+.offer-qr-eyebrow {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 6px;
+}
+.offer-qr-name {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 20px;
+  letter-spacing: -0.3px;
+}
+.offer-qr-canvas-wrap {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 16px;
+  transition: opacity 0.3s;
+}
+.offer-qr-canvas-wrap canvas {
+  border-radius: 12px;
+  display: block;
+}
+.offer-qr-hint {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+.offer-qr-timer {
+  font-size: 13px;
+  color: var(--text-muted);
+  transition: opacity 0.3s;
+}
+.offer-qr-timer span {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  color: var(--text);
+}
+.offer-qr-regen {
+  margin-top: 16px;
+  background: var(--surface3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  padding: 10px 20px;
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+  margin-right: auto;
+}

@@ -317,6 +317,20 @@
   </div>
 </div>
 
+<!-- OFFER QR OVERLAY -->
+<div id="offer-qr-overlay" class="modal-overlay hidden" onclick="closeOfferQR(event)">
+  <div class="modal-card offer-qr-modal">
+    <button class="modal-close" onclick="closeOfferQR()"><i class="ti ti-x"></i></button>
+    <div class="offer-qr-eyebrow">Usa offerta</div>
+    <div class="offer-qr-name" id="oqr-name">—</div>
+    <div class="offer-qr-canvas-wrap" id="oqr-canvas-wrap">
+      <canvas id="oqr-canvas"></canvas>
+    </div>
+    <div class="offer-qr-hint">Mostra questo QR al cameriere</div>
+    <div class="offer-qr-timer hidden" id="oqr-timer-label"></div>
+  </div>
+</div>
+
 <!-- QR LIB -->
 <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
 <script src="app.js"></script>

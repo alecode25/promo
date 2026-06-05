@@ -53,6 +53,32 @@
     <div class="s-hint" id="s-hint">Punta la fotocamera sul QR dell'utente</div>
   </div>
 
+  <!-- offer redemption card (slides up when offer QR found) -->
+  <div id="s-offer-card" class="s-result-card hidden">
+    <div class="s-result-handle"></div>
+    <div class="s-offer-badge">🎁 Riscatto offerta</div>
+    <div class="s-result-header">
+      <div class="s-result-avatar" id="s-offer-avatar">??</div>
+      <div class="s-result-info">
+        <div class="s-result-name" id="s-offer-user-name">—</div>
+        <div class="s-result-level" id="s-offer-user-level">—</div>
+      </div>
+    </div>
+    <div class="s-offer-detail-box">
+      <div class="s-offer-detail-name" id="s-offer-name">—</div>
+      <div class="s-offer-detail-desc" id="s-offer-desc">—</div>
+      <div class="s-offer-detail-price" id="s-offer-price">—</div>
+    </div>
+    <div class="s-result-actions">
+      <button class="s-btn s-btn--ghost" onclick="cancelOfferScan()">
+        <i class="ti ti-x"></i> Annulla
+      </button>
+      <button class="s-btn s-btn--confirm" id="s-offer-confirm-btn" onclick="confirmRedeem()">
+        <i class="ti ti-gift"></i> Conferma riscatto
+      </button>
+    </div>
+  </div>
+
   <!-- result card (slides up when QR found) -->
   <div id="s-result-card" class="s-result-card hidden">
     <div class="s-result-handle"></div>

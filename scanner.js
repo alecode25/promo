@@ -5,10 +5,11 @@
 
 const API = 'https://offerte-uxp3.onrender.com';
 
-let waiterToken   = null;
-let waiterName    = '';
-let scannedUserId = null;
-let scanning      = false;
+let waiterToken        = null;
+let waiterName         = '';
+let scannedUserId      = null;
+let scannedOfferToken  = null;
+let scanning           = false;
 
 let video, canvas, ctx;
 
@@ -126,6 +127,11 @@ function scanLoop() {
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
     const img  = ctx.getImageData(0, 0, canvas.width, canvas.height);
     const code = jsQR(img.data, img.width, img.height, { inversionAttempts: 'dontInvert' });
+    if (code?.data?.startsWith('club1piano-offer:')) {
+      scanning = false;
+      handleOfferQR(code.data);
+      return;
+    }
     if (code?.data?.startsWith('club1piano:')) {
       scanning = false;
       handleQR(code.data);
@@ -168,6 +174,101 @@ async function handleQR(qrData) {
     hint.textContent = 'Punta la fotocamera sul QR dell\'utente';
     scanning = true;
     requestAnimationFrame(scanLoop);
+  }
+}
+
+// ==============================
+// OFFER QR HANDLING
+// ==============================
+async function handleOfferQR(qrData) {
+  const hint  = document.getElementById('s-hint');
+  const token = qrData.replace('club1piano-offer:', '');
+  hint.textContent = 'QR offerta rilevato — verifica in corso…';
+
+  try {
+    const res  = await fetch(API + '/api/scanner/redeem', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + waiterToken },
+      body:    JSON.stringify({ token }),
+    });
+    const data = await res.json();
+
+    if (!res.ok) {
+      sToast(data.error || 'QR non valido');
+      hint.textContent = 'Punta la fotocamera sul QR dell\'utente';
+      scanning = true;
+      requestAnimationFrame(scanLoop);
+      return;
+    }
+
+    scannedOfferToken = token;
+    showOfferCard(data.offer, data.profile);
+  } catch(e) {
+    sToast('Errore di rete');
+    hint.textContent = 'Punta la fotocamera sul QR dell\'utente';
+    scanning = true;
+    requestAnimationFrame(scanLoop);
+  }
+}
+
+function showOfferCard(offer, profile) {
+  const nome    = profile?.nome    || 'Utente';
+  const cognome = profile?.cognome || '';
+  const full    = nome + (cognome ? ' ' + cognome : '');
+  const initials = (nome[0] || '') + (cognome[0] || '');
+  const pts     = profile?.punti || 0;
+  const level   = pts >= 1000 ? 'Platinum' : pts >= 300 ? 'Gold' : 'Silver';
+
+  document.getElementById('s-offer-avatar').textContent    = initials.toUpperCase() || '?';
+  document.getElementById('s-offer-user-name').textContent = full;
+  document.getElementById('s-offer-user-level').textContent = '✦ Membro ' + level;
+  document.getElementById('s-offer-name').textContent      = offer?.name        || '—';
+  document.getElementById('s-offer-desc').textContent      = offer?.description || '';
+  document.getElementById('s-offer-price').textContent     = offer?.price       || '';
+
+  document.getElementById('s-offer-card').classList.remove('hidden');
+}
+
+function cancelOfferScan() {
+  scannedOfferToken = null;
+  document.getElementById('s-offer-card').classList.add('hidden');
+  document.getElementById('s-hint').textContent = 'Punta la fotocamera sul QR dell\'utente';
+  scanning = true;
+  requestAnimationFrame(scanLoop);
+}
+
+async function confirmRedeem() {
+  if (!scannedOfferToken) return;
+  const btn = document.getElementById('s-offer-confirm-btn');
+  btn.disabled = true;
+  btn.textContent = 'Conferma…';
+
+  try {
+    const res  = await fetch(API + '/api/scanner/confirm-redeem', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + waiterToken },
+      body:    JSON.stringify({ token: scannedOfferToken }),
+    });
+    const data = await res.json();
+
+    if (!res.ok) { sToast(data.error || 'Errore'); return; }
+
+    const flash = document.createElement('div');
+    flash.className = 's-success-flash';
+    document.body.appendChild(flash);
+    setTimeout(() => flash.remove(), 600);
+
+    sToast('Offerta riscattata ✓');
+    document.getElementById('s-offer-card').classList.add('hidden');
+    scannedOfferToken = null;
+    document.getElementById('s-hint').textContent = 'Punta la fotocamera sul QR dell\'utente';
+    scanning = true;
+    requestAnimationFrame(scanLoop);
+  } catch(e) {
+    sToast('Errore di rete');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="ti ti-gift"></i> Conferma riscatto';
   }
 }
 
