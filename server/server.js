@@ -77,8 +77,14 @@ async function getUserFromRequest(req) {
     : req.cookies.sb_access;
   if (!token) return null;
   const { data: { user }, error } = await sbService.auth.getUser(token);
-  if (error || !user) return null;
-  return user;
+  if (!error && user) return user;
+
+  // Token scaduto — prova refresh con cookie
+  const refreshToken = req.cookies.sb_refresh;
+  if (!refreshToken) return null;
+  const { data: refreshed, error: refreshErr } = await sbAnon.auth.refreshSession({ refresh_token: refreshToken });
+  if (refreshErr || !refreshed?.session) return null;
+  return refreshed.session.user;
 }
 // Alias per compatibilità
 const getUserFromCookies = getUserFromRequest;
