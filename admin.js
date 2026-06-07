@@ -123,7 +123,8 @@ function adminScanLoop() {
   if (adminScanVideo.readyState >= adminScanVideo.HAVE_ENOUGH_DATA) {
     adminScanCtx.drawImage(adminScanVideo, 0, 0, adminScanCanvas.width, adminScanCanvas.height);
     const img  = adminScanCtx.getImageData(0, 0, adminScanCanvas.width, adminScanCanvas.height);
-    const code = jsQR(img.data, img.width, img.height, { inversionAttempts: 'dontInvert' });
+    let code = null;
+    try { code = jsQR(img.data, img.width, img.height, { inversionAttempts: 'attemptBoth' }); } catch(e) {}
     if (code?.data?.startsWith('club1piano:')) {
       adminScanning = false;
       handleAdminQR(code.data);

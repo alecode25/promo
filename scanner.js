@@ -133,7 +133,8 @@ function scanLoop() {
   if (video.readyState >= video.HAVE_ENOUGH_DATA) {
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
     const img  = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    const code = jsQR(img.data, img.width, img.height, { inversionAttempts: 'dontInvert' });
+    let code = null;
+    try { code = jsQR(img.data, img.width, img.height, { inversionAttempts: 'attemptBoth' }); } catch(e) {}
     if (code?.data?.startsWith('club1piano-offer:')) {
       scanning = false;
       handleOfferQR(code.data);
