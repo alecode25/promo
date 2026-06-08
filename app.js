@@ -256,6 +256,9 @@ function renderHomeOffers() {
         <span class="offer-snap-price">${o.price}</span>
         ${o.orig && o.price !== 'Gratis' ? `<span class="offer-snap-orig">${o.orig}</span>` : ''}
       </div>
+      <button class="offer-snap-use-btn" onclick="event.stopPropagation();useOffer(${o.id})">
+        <i class="ti ti-qrcode"></i> Usa QR
+      </button>
     </div>
   `).join('');
 }
@@ -276,7 +279,7 @@ function renderOfferList(filter = 'all') {
           ${o.orig && o.price !== 'Gratis' ? `<span class="offer-full-orig">${o.orig}</span>` : ''}
         </div>
         ${o.active
-          ? `<button class="offer-use-btn" onclick="event.stopPropagation();openModal(${o.id})">Usa QR</button>`
+          ? `<button class="offer-use-btn" onclick="event.stopPropagation();useOffer(${o.id})">Usa QR</button>`
           : `<span class="offer-coming-lbl">In arrivo</span>`}
       </div>
       ${o.expiry_date ? `<div class="offer-expiry">⏱ Scade il ${new Date(o.expiry_date).toLocaleDateString('it', {day:'2-digit',month:'2-digit',year:'numeric'})}</div>` : ''}
@@ -403,22 +406,26 @@ function renderOfferQRsOnScreen() {
 
   if (hint) hint.classList.add('hidden');
 
-  section.innerHTML = entries.map(([id, { name, token }]) => `
-    <div class="qr-offer-card" id="qr-offer-card-${id}">
+  section.innerHTML = entries.map(([id, { name, token, used }]) => `
+    <div class="qr-offer-card${used ? ' qr-offer-card--used' : ''}" id="qr-offer-card-${id}">
       <div class="qr-offer-card-header">
         <div class="qr-offer-card-name"><i class="ti ti-tag"></i> ${name}</div>
         <button class="qr-offer-card-remove" onclick="_removeOfferToken(${id})" title="Rimuovi">
           <i class="ti ti-x"></i>
         </button>
       </div>
-      <div class="qr-offer-box" id="qr-offer-box-${id}"></div>
-      <div class="qr-hint">Mostra al cameriere per riscattare</div>
+      <div class="qr-offer-box-wrap">
+        <div class="qr-offer-box" id="qr-offer-box-${id}"></div>
+        ${used ? `<div class="qr-used-overlay"><i class="ti ti-circle-check"></i><span>Già utilizzato</span></div>` : ''}
+      </div>
+      <div class="qr-hint">${used ? 'Offerta riscattata ✓' : 'Mostra al cameriere per riscattare'}</div>
     </div>
   `).join('');
 
-  // genera QR per ogni offerta
+  // genera QR solo per offerte non ancora usate
   if (typeof QRCode === 'undefined') return;
-  entries.forEach(([id, { token }]) => {
+  entries.forEach(([id, { token, used }]) => {
+    if (used) return;
     const el = document.getElementById(`qr-offer-box-${id}`);
     if (el) new QRCode(el, { text: `club1piano-offer:${token}`, width: 176, height: 176, colorDark: '#0D0D0D', colorLight: '#FFFFFF', correctLevel: QRCode.CorrectLevel.M });
   });
@@ -440,7 +447,7 @@ async function syncRedeemedOffers() {
     if (!used?.length) return;
     let changed = false;
     Object.entries(raw).forEach(([id, v]) => {
-      if (used.includes(v.token)) { delete raw[id]; changed = true; }
+      if (used.includes(v.token) && !v.used) { raw[id] = { ...v, used: true }; changed = true; }
     });
     if (changed) {
       localStorage.setItem(_offerTokensKey(), JSON.stringify(raw));

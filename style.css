@@ -361,6 +361,25 @@ body {
   border-radius: 20px;
   border: 0.5px solid var(--gold-dim);
 }
+.offer-snap-use-btn {
+  margin-top: 10px;
+  width: 100%;
+  background: var(--gold);
+  border: none;
+  border-radius: 8px;
+  color: #0a0a0a;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 8px 6px;
+  cursor: pointer;
+  font-family: inherit;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  transition: opacity 0.15s;
+}
+.offer-snap-use-btn:active { opacity: 0.8; }
 
 /* ========== CATEGORY GRID ========== */
 .cat-grid {
@@ -1832,6 +1851,7 @@ body {
   display: flex;
   align-items: center;
 }
+.qr-offer-box-wrap { position: relative; }
 .qr-offer-box {
   background: #fff;
   border-radius: 12px;
@@ -1839,6 +1859,23 @@ body {
   box-shadow: 0 2px 12px rgba(0,0,0,0.25);
 }
 .qr-offer-box img { display: none; }
+.qr-used-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(10,10,10,0.82);
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  color: var(--gold);
+  font-weight: 600;
+  font-size: 14px;
+  backdrop-filter: blur(2px);
+}
+.qr-used-overlay i { font-size: 32px; }
+.qr-offer-card--used { opacity: 0.72; }
 #qr-offers-section {
   width: 100%;
   display: flex;
