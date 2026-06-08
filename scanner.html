@@ -42,8 +42,7 @@
 
   <!-- camera viewport -->
   <div class="s-viewport" id="s-viewport">
-    <video id="s-video" autoplay muted playsinline></video>
-    <canvas id="s-canvas"></canvas>
+    <div id="s-qr-reader"></div>
 
     <!-- crosshair frame -->
     <div class="s-frame" id="s-frame">
@@ -130,7 +129,7 @@
 <!-- TOAST -->
 <div id="s-toast"></div>
 
-<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <script src="scanner.js"></script>
 </body>
 </html>

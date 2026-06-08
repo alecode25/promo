@@ -415,6 +415,23 @@ app.post('/api/offers/:id/token', async (req, res) => {
   res.json({ token, expires_at });
 });
 
+// POST /api/offers/check-tokens — restituisce quali token sono già stati usati
+app.post('/api/offers/check-tokens', async (req, res) => {
+  const user = await getUserFromRequest(req);
+  if (!user) return res.status(401).json({ error: 'Non autenticato' });
+
+  const { tokens } = req.body;
+  if (!Array.isArray(tokens) || tokens.length === 0) return res.json({ used: [] });
+
+  const { data } = await sbService.from('offer_redemptions')
+    .select('token')
+    .eq('user_id', user.id)
+    .in('token', tokens)
+    .not('used_at', 'is', null);
+
+  res.json({ used: (data || []).map(r => r.token) });
+});
+
 // POST /api/scanner/redeem — cameriere scansiona QR offerta
 app.post('/api/scanner/redeem', requireScanner, async (req, res) => {
   const { token } = req.body;

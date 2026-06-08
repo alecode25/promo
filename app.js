@@ -43,7 +43,7 @@ function _activateScreen(screenId) {
   document.querySelectorAll('.nav-item').forEach(n => {
     n.classList.toggle('active', n.dataset.screen === screenId);
   });
-  if (screenId === 'screen-qr') renderOfferQRsOnScreen();
+  if (screenId === 'screen-qr') { renderOfferQRsOnScreen(); syncRedeemedOffers(); }
   window.scrollTo(0, 0);
 }
 
@@ -319,7 +319,10 @@ function closeModal(event) {
 }
 function useOffer(id) {
   document.getElementById('offer-modal').classList.add('hidden');
-  requireAuth(() => openOfferQR(id));
+  requireAuth(() => {
+    goTo('screen-qr');
+    openOfferQR(id);
+  });
 }
 
 function _ensureQRLib() {
@@ -335,40 +338,19 @@ function _ensureQRLib() {
 
 async function openOfferQR(offerId) {
   const o = OFFERS.find(x => x.id === offerId);
-  document.getElementById('oqr-name').textContent = o ? o.name : '—';
-  document.getElementById('oqr-canvas-wrap').innerHTML = '<canvas id="oqr-canvas"></canvas>';
-
-  // Mostra scadenza offerta se presente
-  const timerLabel = document.getElementById('oqr-timer-label');
-  if (o && o.expiry_date) {
-    timerLabel.textContent = 'Valido fino al ' + new Date(o.expiry_date).toLocaleDateString('it', { day:'2-digit', month:'2-digit', year:'numeric' });
-    timerLabel.classList.remove('hidden');
-  } else {
-    timerLabel.classList.add('hidden');
-  }
-
-  document.getElementById('offer-qr-overlay').classList.remove('hidden');
+  showToast('Generazione QR…');
 
   try {
     await _ensureQRLib();
     const res  = await authFetch(`/api/offers/${offerId}/token`, { method: 'POST', headers: { 'Content-Type': 'application/json' } });
     const data = await res.json();
-    if (!res.ok) { showToast(data.error || 'Errore generazione QR'); closeOfferQR(); return; }
+    if (!res.ok) { showToast(data.error || 'Errore generazione QR'); return; }
 
-    const qrText = `club1piano-offer:${data.token}`;
-
-    // overlay
-    const wrap = document.getElementById('oqr-canvas-wrap');
-    wrap.innerHTML = '';
-    new QRCode(wrap, { text: qrText, width: 220, height: 220, colorDark: '#0D0D0D', colorLight: '#FFFFFF', correctLevel: QRCode.CorrectLevel.M });
-
-    // salva token e aggiorna screen-qr
     _saveOfferToken(offerId, o ? o.name : '—', data.token, o?.expiry_date || null);
     renderOfferQRsOnScreen();
   } catch(e) {
     console.error('[offerQR]', e);
     showToast(e.message || 'Errore QR');
-    closeOfferQR();
   }
 }
 
@@ -440,6 +422,31 @@ function renderOfferQRsOnScreen() {
     const el = document.getElementById(`qr-offer-box-${id}`);
     if (el) new QRCode(el, { text: `club1piano-offer:${token}`, width: 176, height: 176, colorDark: '#0D0D0D', colorLight: '#FFFFFF', correctLevel: QRCode.CorrectLevel.M });
   });
+}
+
+async function syncRedeemedOffers() {
+  if (isGuest) return;
+  const raw = JSON.parse(localStorage.getItem(_offerTokensKey()) || '{}');
+  const tokens = Object.values(raw).map(v => v.token).filter(Boolean);
+  if (!tokens.length) return;
+  try {
+    const res = await authFetch('/api/offers/check-tokens', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ tokens }),
+    });
+    if (!res.ok) return;
+    const { used } = await res.json();
+    if (!used?.length) return;
+    let changed = false;
+    Object.entries(raw).forEach(([id, v]) => {
+      if (used.includes(v.token)) { delete raw[id]; changed = true; }
+    });
+    if (changed) {
+      localStorage.setItem(_offerTokensKey(), JSON.stringify(raw));
+      renderOfferQRsOnScreen();
+    }
+  } catch(e) {}
 }
 
 // ===== SERVICE WORKER =====

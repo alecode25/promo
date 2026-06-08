@@ -16,9 +16,8 @@ let waiterToken        = null;
 let waiterName         = '';
 let scannedUserId      = null;
 let scannedOfferToken  = null;
-let scanning           = false;
-
-let video, canvas, ctx;
+let processing         = false;
+let html5QrCode        = null;
 
 // ==============================
 // AUTH
@@ -76,42 +75,33 @@ async function startScanner() {
   app.classList.remove('hidden');
   document.getElementById('s-waiter-name').textContent = waiterName || 'Cameriere';
 
-  video  = document.getElementById('s-video');
-  canvas = document.getElementById('s-canvas');
-  ctx    = canvas.getContext('2d', { willReadFrequently: true });
-
   try {
-    const stream = await navigator.mediaDevices.getUserMedia({
-      video: {
-        facingMode: { ideal: 'environment' },
-        width:  { ideal: 1280 },
-        height: { ideal: 720 },
+    html5QrCode = new Html5Qrcode('s-qr-reader');
+    await html5QrCode.start(
+      { facingMode: 'environment' },
+      { fps: 10, qrbox: { width: 220, height: 220 }, aspectRatio: 1.0 },
+      (decodedText) => {
+        if (processing) return;
+        if (decodedText.startsWith('club1piano-offer:')) {
+          processing = true;
+          handleOfferQR(decodedText);
+        } else if (decodedText.startsWith('club1piano:')) {
+          processing = true;
+          handleQR(decodedText);
+        }
       },
-    });
-    video.srcObject = stream;
-    await video.play();
-
-    // Wait for metadata
-    await new Promise(res => {
-      if (video.readyState >= 2) { res(); return; }
-      video.addEventListener('loadeddata', res, { once: true });
-    });
-
-    canvas.width  = video.videoWidth  || 640;
-    canvas.height = video.videoHeight || 480;
-    scanning = true;
-    requestAnimationFrame(scanLoop);
+      () => {}
+    );
   } catch(e) {
     showNoCameraFallback(e.message);
   }
 }
 
 function stopCamera() {
-  scanning = false;
-  if (video?.srcObject) {
-    video.srcObject.getTracks().forEach(t => t.stop());
-    video.srcObject = null;
+  if (html5QrCode) {
+    html5QrCode.stop().then(() => { html5QrCode.clear(); html5QrCode = null; }).catch(() => {});
   }
+  processing = false;
 }
 
 function showNoCameraFallback(msg) {
@@ -123,30 +113,6 @@ function showNoCameraFallback(msg) {
       <div class="s-no-cam-sub">${msg || 'Controlla i permessi fotocamera nelle impostazioni del browser.'}</div>
     </div>
   `;
-}
-
-// ==============================
-// SCAN LOOP
-// ==============================
-function scanLoop() {
-  if (!scanning) return;
-  if (video.readyState >= video.HAVE_ENOUGH_DATA) {
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-    const img  = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    let code = null;
-    try { code = jsQR(img.data, img.width, img.height, { inversionAttempts: 'attemptBoth' }); } catch(e) {}
-    if (code?.data?.startsWith('club1piano-offer:')) {
-      scanning = false;
-      handleOfferQR(code.data);
-      return;
-    }
-    if (code?.data?.startsWith('club1piano:')) {
-      scanning = false;
-      handleQR(code.data);
-      return;
-    }
-  }
-  requestAnimationFrame(scanLoop);
 }
 
 // ==============================
@@ -170,8 +136,7 @@ async function handleQR(qrData) {
     if (!res.ok) {
       sToast(data.error || 'QR non valido');
       hint.textContent = 'Punta la fotocamera sul QR dell\'utente';
-      scanning = true;
-      requestAnimationFrame(scanLoop);
+      processing = false;
       return;
     }
 
@@ -180,8 +145,7 @@ async function handleQR(qrData) {
   } catch(e) {
     sToast('Errore di rete');
     hint.textContent = 'Punta la fotocamera sul QR dell\'utente';
-    scanning = true;
-    requestAnimationFrame(scanLoop);
+    processing = false;
   }
 }
 
@@ -204,8 +168,7 @@ async function handleOfferQR(qrData) {
     if (!res.ok) {
       sToast(data.error || 'QR non valido');
       hint.textContent = 'Punta la fotocamera sul QR dell\'utente';
-      scanning = true;
-      requestAnimationFrame(scanLoop);
+      processing = false;
       return;
     }
 
@@ -214,8 +177,7 @@ async function handleOfferQR(qrData) {
   } catch(e) {
     sToast('Errore di rete');
     hint.textContent = 'Punta la fotocamera sul QR dell\'utente';
-    scanning = true;
-    requestAnimationFrame(scanLoop);
+    processing = false;
   }
 }
 
@@ -241,8 +203,7 @@ function cancelOfferScan() {
   scannedOfferToken = null;
   document.getElementById('s-offer-card').classList.add('hidden');
   document.getElementById('s-hint').textContent = 'Punta la fotocamera sul QR dell\'utente';
-  scanning = true;
-  requestAnimationFrame(scanLoop);
+  processing = false;
 }
 
 async function confirmRedeem() {
@@ -270,8 +231,7 @@ async function confirmRedeem() {
     document.getElementById('s-offer-card').classList.add('hidden');
     scannedOfferToken = null;
     document.getElementById('s-hint').textContent = 'Punta la fotocamera sul QR dell\'utente';
-    scanning = true;
-    requestAnimationFrame(scanLoop);
+    processing = false;
   } catch(e) {
     sToast('Errore di rete');
   } finally {
@@ -304,8 +264,7 @@ function cancelScan() {
   scannedUserId = null;
   document.getElementById('s-result-card').classList.add('hidden');
   document.getElementById('s-hint').textContent = 'Punta la fotocamera sul QR dell\'utente';
-  scanning = true;
-  requestAnimationFrame(scanLoop);
+  processing = false;
 }
 
 async function confirmCheckin() {
@@ -347,8 +306,7 @@ async function confirmCheckin() {
     document.getElementById('s-result-card').classList.add('hidden');
     scannedUserId = null;
     document.getElementById('s-hint').textContent = 'Punta la fotocamera sul QR dell\'utente';
-    scanning = true;
-    requestAnimationFrame(scanLoop);
+    processing = false;
   } catch(e) {
     sToast('Errore di rete');
   } finally {
