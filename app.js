@@ -498,8 +498,19 @@ function renderOfferQRsOnScreen() {
 
   if (hint) hint.classList.add('hidden');
 
-  section.innerHTML = entries.map(([id, { name, token, used }]) => `
-    <div class="qr-offer-card${used ? ' qr-offer-card--used' : ''}" id="qr-offer-card-${id}">
+  section.innerHTML = entries.map(([id, { name, token, used }]) => used ? `
+    <div class="qr-offer-card qr-offer-card--used" id="qr-offer-card-${id}">
+      <button class="qr-offer-card-remove" onclick="_removeOfferToken(${id})" title="Rimuovi">
+        <i class="ti ti-x"></i>
+      </button>
+      <div class="qr-used-stamp">USATA</div>
+      <div class="qr-used-icon"><i class="ti ti-circle-check"></i></div>
+      <div class="qr-used-title">Offerta Riscattata</div>
+      <div class="qr-used-name">${name}</div>
+      <div class="qr-used-sub">Questa offerta è già stata utilizzata</div>
+    </div>
+  ` : `
+    <div class="qr-offer-card" id="qr-offer-card-${id}">
       <div class="qr-offer-card-header">
         <div class="qr-offer-card-name"><i class="ti ti-tag"></i> ${name}</div>
         <button class="qr-offer-card-remove" onclick="_removeOfferToken(${id})" title="Rimuovi">
@@ -508,9 +519,8 @@ function renderOfferQRsOnScreen() {
       </div>
       <div class="qr-offer-box-wrap">
         <div class="qr-offer-box" id="qr-offer-box-${id}"></div>
-        ${used ? `<div class="qr-used-overlay"><i class="ti ti-circle-check"></i><span>Già utilizzato</span></div>` : ''}
       </div>
-      <div class="qr-hint">${used ? 'Offerta riscattata ✓' : 'Mostra al cameriere per riscattare'}</div>
+      <div class="qr-hint">Mostra al cameriere per riscattare</div>
     </div>
   `).join('');
 
