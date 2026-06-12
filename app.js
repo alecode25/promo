@@ -48,9 +48,8 @@ function _activateScreen(screenId) {
 }
 
 // ===== AUTH =====
-function authFetch(url, opts = {}) {
-  const token = localStorage.getItem('club1_token');
-  return fetch(API + url, {
+async function authFetch(url, opts = {}) {
+  const makeReq = (token) => fetch(API + url, {
     ...opts,
     credentials: 'include',
     headers: {
@@ -58,6 +57,29 @@ function authFetch(url, opts = {}) {
       ...(token ? { 'Authorization': 'Bearer ' + token } : {}),
     },
   });
+
+  let token = localStorage.getItem('club1_token');
+  let res = await makeReq(token);
+
+  if (res.status === 401) {
+    // Token scaduto — prova refresh
+    const refreshRes = await fetch(API + '/api/auth/refresh', {
+      method: 'POST',
+      credentials: 'include',
+    });
+    if (refreshRes.ok) {
+      const { accessToken } = await refreshRes.json();
+      localStorage.setItem('club1_token', accessToken);
+      res = await makeReq(accessToken);
+    } else {
+      // Refresh fallito → logout
+      localStorage.removeItem('club1_session');
+      localStorage.removeItem('club1_token');
+      window.location.replace('login.html');
+    }
+  }
+
+  return res;
 }
 
 async function handleLogout() {

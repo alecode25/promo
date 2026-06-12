@@ -190,6 +190,18 @@ app.get('/api/auth/session', async (req, res) => {
 });
 
 // ===================================================
+// AUTH — REFRESH TOKEN
+// ===================================================
+app.post('/api/auth/refresh', async (req, res) => {
+  const refreshToken = req.cookies.sb_refresh;
+  if (!refreshToken) return res.status(401).json({ error: 'Non autenticato' });
+  const { data, error } = await sbAnon.auth.refreshSession({ refresh_token: refreshToken });
+  if (error || !data?.session) return res.status(401).json({ error: 'Sessione scaduta, effettua il login' });
+  setSessionCookies(res, data.session);
+  res.json({ accessToken: data.session.access_token });
+});
+
+// ===================================================
 // ADMIN — middleware
 // ===================================================
 function requireAdmin(req, res, next) {
