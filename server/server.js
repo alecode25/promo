@@ -665,5 +665,17 @@ app.delete('/api/admin/waiters/:id', requireAdmin, async (req, res) => {
   res.json({ ok: true });
 });
 
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok', timestamp: Date.now() });
+});
+
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Club 1 Piano API attiva su porta ${PORT}`));
+app.listen(PORT, () => {
+  console.log(`Club 1 Piano API attiva su porta ${PORT}`);
+  const KEEP_ALIVE_URL = process.env.RENDER_EXTERNAL_URL || `http://localhost:${PORT}`;
+  setInterval(() => {
+    fetch(`${KEEP_ALIVE_URL}/api/health`)
+      .then(r => console.log(`[keep-alive] ${new Date().toISOString()} → ${r.status}`))
+      .catch(err => console.warn('[keep-alive] ping failed:', err.message));
+  }, 14 * 60 * 1000);
+});
