@@ -48,6 +48,25 @@ function _activateScreen(screenId) {
 }
 
 // ===== AUTH =====
+let _refreshPromise = null;
+
+async function _doRefresh() {
+  if (!_refreshPromise) {
+    _refreshPromise = fetch(API + '/api/auth/refresh', {
+      method: 'POST',
+      credentials: 'include',
+    }).then(async r => {
+      if (r.ok) {
+        const { accessToken } = await r.json();
+        localStorage.setItem('club1_token', accessToken);
+        return accessToken;
+      }
+      return null;
+    }).finally(() => { _refreshPromise = null; });
+  }
+  return _refreshPromise;
+}
+
 async function authFetch(url, opts = {}) {
   const makeReq = (token) => fetch(API + url, {
     ...opts,
@@ -62,20 +81,17 @@ async function authFetch(url, opts = {}) {
   let res = await makeReq(token);
 
   if (res.status === 401) {
-    // Token scaduto — prova refresh
-    const refreshRes = await fetch(API + '/api/auth/refresh', {
-      method: 'POST',
-      credentials: 'include',
-    });
-    if (refreshRes.ok) {
-      const { accessToken } = await refreshRes.json();
-      localStorage.setItem('club1_token', accessToken);
-      res = await makeReq(accessToken);
+    const newToken = await _doRefresh();
+    if (newToken) {
+      res = await makeReq(newToken);
     } else {
-      // Refresh fallito → logout
+      // Refresh fallito — sessione scaduta
       localStorage.removeItem('club1_session');
       localStorage.removeItem('club1_token');
+      localStorage.removeItem('club1_cached_offers');
       window.location.replace('login.html');
+      // Blocca esecuzione: restituisci risposta "pending" che non verrà processata
+      return new Response(JSON.stringify({ error: 'Sessione scaduta' }), { status: 401 });
     }
   }
 
