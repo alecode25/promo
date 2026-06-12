@@ -55,10 +55,13 @@ async function _doRefresh() {
     _refreshPromise = fetch(API + '/api/auth/refresh', {
       method: 'POST',
       credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refreshToken: localStorage.getItem('club1_refresh') }),
     }).then(async r => {
       if (r.ok) {
-        const { accessToken } = await r.json();
+        const { accessToken, refreshToken } = await r.json();
         localStorage.setItem('club1_token', accessToken);
+        if (refreshToken) localStorage.setItem('club1_refresh', refreshToken);
         return accessToken;
       }
       return null;
@@ -101,6 +104,7 @@ async function authFetch(url, opts = {}) {
 async function handleLogout() {
   localStorage.removeItem('club1_session');
   localStorage.removeItem('club1_token');
+  localStorage.removeItem('club1_refresh');
   localStorage.removeItem('club1_cached_offers');
   await fetch(API + '/api/auth/logout', { method: 'POST', credentials: 'include' });
   currentUser = null;
@@ -297,14 +301,14 @@ function refreshQR() {
 }
 
 // ===== OFFERTE RENDER =====
-// Offerte con token attivo (generato o usato) → spariscono da home/lista
-function _getActivatedOfferIds() {
+// Solo offerte confermate usate → spariscono da home/lista
+function _getRedeemedOfferIds() {
   const raw = JSON.parse(localStorage.getItem(_offerTokensKey()) || '{}');
-  return new Set(Object.keys(raw).map(Number));
+  return new Set(Object.entries(raw).filter(([, v]) => v.used).map(([id]) => Number(id)));
 }
 
 function renderHomeOffers() {
-  const activated = isGuest ? new Set() : _getActivatedOfferIds();
+  const activated = isGuest ? new Set() : _getRedeemedOfferIds();
   const scroll = document.getElementById('offer-scroll');
   scroll.innerHTML = OFFERS.filter(o => o.active && !activated.has(o.id)).map(o => `
     <div class="offer-snap-card" onclick="openModal(${o.id})">
@@ -324,7 +328,7 @@ function renderHomeOffers() {
   `).join('');
 }
 function renderOfferList(filter = 'all') {
-  const activated = isGuest ? new Set() : _getActivatedOfferIds();
+  const activated = isGuest ? new Set() : _getRedeemedOfferIds();
   const list  = document.getElementById('offer-list');
   const base  = filter === 'all' ? OFFERS : OFFERS.filter(o => o.category === filter);
   const items = base.filter(o => !activated.has(o.id));
@@ -404,9 +408,17 @@ function _ensureQRLib() {
 
 async function openOfferQR(offerId) {
   const stored = JSON.parse(localStorage.getItem(_offerTokensKey()) || '{}');
+
+  // Già usata → blocca
   if (stored[offerId]?.used) {
     showToast('Offerta già riscattata');
-    goTo('screen-qr');
+    return;
+  }
+
+  // Token già generato ma non usato → mostra QR esistente senza chiamare il server
+  if (stored[offerId]?.token) {
+    await _ensureQRLib();
+    renderOfferQRsOnScreen();
     return;
   }
 
@@ -431,8 +443,6 @@ async function openOfferQR(offerId) {
 
     _saveOfferToken(offerId, o ? o.name : '—', data.token, o?.expiry_date || null);
     renderOfferQRsOnScreen();
-    renderHomeOffers();
-    renderOfferList('all');
   } catch(e) {
     console.error('[offerQR]', e);
     showToast(e.message || 'Errore QR');

@@ -59,7 +59,8 @@ async function handleLogin() {
 
     if (!res.ok) { showError(errEl, data.error || 'Errore di accesso'); return; }
     localStorage.setItem('club1_session', JSON.stringify(data));
-    if (data.accessToken) localStorage.setItem('club1_token', data.accessToken);
+    if (data.accessToken)  localStorage.setItem('club1_token',   data.accessToken);
+    if (data.refreshToken) localStorage.setItem('club1_refresh', data.refreshToken);
     window.location.replace('offerte.html');
   } catch(e) {
     showError(errEl, 'Server non raggiungibile');
@@ -98,7 +99,8 @@ async function handleRegister() {
     if (!res.ok) { showError(errEl, data.error || 'Errore di registrazione'); return; }
     sessionStorage.removeItem('pending_ref');
     localStorage.setItem('club1_session', JSON.stringify(data));
-    if (data.accessToken) localStorage.setItem('club1_token', data.accessToken);
+    if (data.accessToken)  localStorage.setItem('club1_token',   data.accessToken);
+    if (data.refreshToken) localStorage.setItem('club1_refresh', data.refreshToken);
     window.location.replace('offerte.html');
   } catch(e) {
     showError(errEl, 'Server non raggiungibile');

@@ -121,7 +121,8 @@ app.post('/api/auth/login', async (req, res) => {
   res.json({
     user:        { id: data.user.id, email: data.user.email },
     profile:     profile || { nome: data.user.user_metadata?.nome || 'Utente', cognome: data.user.user_metadata?.cognome || '', email: data.user.email, punti: 0, visite: 0, offerte_usate: 0 },
-    accessToken: data.session.access_token,
+    accessToken:  data.session.access_token,
+    refreshToken: data.session.refresh_token,
   });
 });
 
@@ -199,12 +200,13 @@ app.get('/api/auth/session', requireUser, async (req, res) => {
 // AUTH — REFRESH TOKEN
 // ===================================================
 app.post('/api/auth/refresh', async (req, res) => {
-  const refreshToken = req.cookies.sb_refresh;
-  if (!refreshToken) return res.status(401).json({ error: 'Non autenticato' });
+  // Accetta refresh token da cookie O da body (fallback per browser che bloccano cookie cross-origin)
+  const refreshToken = req.cookies.sb_refresh || req.body?.refreshToken;
+  if (!refreshToken) return res.status(401).json({ error: 'Sessione scaduta, effettua il login' });
   const { data, error } = await sbAnon.auth.refreshSession({ refresh_token: refreshToken });
   if (error || !data?.session) return res.status(401).json({ error: 'Sessione scaduta, effettua il login' });
   setSessionCookies(res, data.session);
-  res.json({ accessToken: data.session.access_token });
+  res.json({ accessToken: data.session.access_token, refreshToken: data.session.refresh_token });
 });
 
 // ===================================================
