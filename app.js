@@ -63,6 +63,7 @@ function authFetch(url, opts = {}) {
 async function handleLogout() {
   localStorage.removeItem('club1_session');
   localStorage.removeItem('club1_token');
+  localStorage.removeItem('club1_cached_offers');
   await fetch(API + '/api/auth/logout', { method: 'POST', credentials: 'include' });
   currentUser = null;
   userProfile = null;
@@ -95,6 +96,18 @@ async function enterApp() {
 }
 
 async function loadOffers() {
+  // Mostra cache subito (zero attesa)
+  const cached = localStorage.getItem('club1_cached_offers');
+  if (cached) {
+    try {
+      OFFERS = JSON.parse(cached);
+      renderHomeOffers();
+      renderOfferList('all');
+      renderOfferQRsOnScreen();
+    } catch (e) { localStorage.removeItem('club1_cached_offers'); }
+  }
+
+  // Fetch dati freschi in background
   try {
     const res = await fetch(API + '/api/offers');
     if (res.ok) {
@@ -111,6 +124,9 @@ async function loadOffers() {
         active:    o.active,
         image_url: o.image_url || null,
       }));
+      localStorage.setItem('club1_cached_offers', JSON.stringify(OFFERS));
+      renderHomeOffers();
+      renderOfferList('all');
       renderOfferQRsOnScreen();
     }
   } catch(e) {
@@ -748,6 +764,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   initTheme();
   initPullToRefresh();
 
+  const hasCached = !!localStorage.getItem('club1_cached_offers');
+  const hasSaved = !!localStorage.getItem('club1_session');
+  const splashDelay = (hasCached && hasSaved) ? 600 : 1900;
+
   setTimeout(async () => {
     const splash = document.getElementById('splash');
     splash.style.opacity = '0';
@@ -774,5 +794,5 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     window.location.replace('login.html');
-  }, 1900);
+  }, splashDelay);
 });
