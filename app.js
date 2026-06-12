@@ -259,15 +259,16 @@ function refreshQR() {
 }
 
 // ===== OFFERTE RENDER =====
-function _getRedeemedOfferIds() {
+// Offerte con token attivo (generato o usato) → spariscono da home/lista
+function _getActivatedOfferIds() {
   const raw = JSON.parse(localStorage.getItem(_offerTokensKey()) || '{}');
-  return new Set(Object.entries(raw).filter(([, v]) => v.used).map(([id]) => Number(id)));
+  return new Set(Object.keys(raw).map(Number));
 }
 
 function renderHomeOffers() {
-  const redeemed = _getRedeemedOfferIds();
+  const activated = isGuest ? new Set() : _getActivatedOfferIds();
   const scroll = document.getElementById('offer-scroll');
-  scroll.innerHTML = OFFERS.filter(o => o.active && !redeemed.has(o.id)).map(o => `
+  scroll.innerHTML = OFFERS.filter(o => o.active && !activated.has(o.id)).map(o => `
     <div class="offer-snap-card" onclick="openModal(${o.id})">
       ${o.image_url ? `<div class="offer-snap-img"><img src="${o.image_url}" alt="${o.name}" loading="lazy"></div>` : ''}
       <div class="offer-snap-tag">${o.tag}</div>
@@ -285,10 +286,10 @@ function renderHomeOffers() {
   `).join('');
 }
 function renderOfferList(filter = 'all') {
-  const redeemed = _getRedeemedOfferIds();
+  const activated = isGuest ? new Set() : _getActivatedOfferIds();
   const list  = document.getElementById('offer-list');
   const base  = filter === 'all' ? OFFERS : OFFERS.filter(o => o.category === filter);
-  const items = base.filter(o => !redeemed.has(o.id));
+  const items = base.filter(o => !activated.has(o.id));
   list.innerHTML = items.map(o => `
     <div class="offer-full-card${o.active ? '' : ' dimmed'}"${o.active ? ` onclick="openModal(${o.id})"` : ''}>
       ${o.image_url ? `<div class="offer-full-img"><img src="${o.image_url}" alt="${o.name}" loading="lazy"></div>` : ''}
@@ -392,6 +393,8 @@ async function openOfferQR(offerId) {
 
     _saveOfferToken(offerId, o ? o.name : '—', data.token, o?.expiry_date || null);
     renderOfferQRsOnScreen();
+    renderHomeOffers();
+    renderOfferList('all');
   } catch(e) {
     console.error('[offerQR]', e);
     showToast(e.message || 'Errore QR');
