@@ -130,6 +130,7 @@ async function enterApp() {
     loadInvitesSent();
     checkPendingInvites();
     populateEditForm();
+    syncRedeemedOffers(); // aggiorna used: true da server, poi ri-renderizza
   }
   renderHomeOffers();
   renderOfferList('all');
