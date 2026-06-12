@@ -130,7 +130,8 @@ async function enterApp() {
     loadInvitesSent();
     checkPendingInvites();
     populateEditForm();
-    syncRedeemedOffers(); // aggiorna used: true da server, poi ri-renderizza
+    fetchRedeemedFromServer(); // scarica offerte già riscattate (dopo logout/nuovo device)
+    syncRedeemedOffers();      // aggiorna token esistenti in localStorage
   }
   renderHomeOffers();
   renderOfferList('all');
@@ -532,6 +533,31 @@ function renderOfferQRsOnScreen() {
     const el = document.getElementById(`qr-offer-box-${id}`);
     if (el) new QRCode(el, { text: `club1piano-offer:${token}`, width: 176, height: 176, colorDark: '#0D0D0D', colorLight: '#FFFFFF', correctLevel: QRCode.CorrectLevel.M });
   });
+}
+
+// Scarica dal server tutte le offerte già riscattate (utile dopo logout/login o nuovo device)
+async function fetchRedeemedFromServer() {
+  if (isGuest) return;
+  try {
+    const res = await authFetch('/api/offers/my-redemptions');
+    if (!res.ok) return;
+    const redemptions = await res.json();
+    if (!redemptions.length) return;
+    const raw = JSON.parse(localStorage.getItem(_offerTokensKey()) || '{}');
+    let changed = false;
+    redemptions.forEach(({ offer_id, token }) => {
+      if (!raw[offer_id] || !raw[offer_id].used) {
+        const name = OFFERS.find(o => o.id === offer_id)?.name || '—';
+        raw[offer_id] = { name, token, expiry_date: null, used: true };
+        changed = true;
+      }
+    });
+    if (changed) {
+      localStorage.setItem(_offerTokensKey(), JSON.stringify(raw));
+      renderHomeOffers();
+      renderOfferList('all');
+    }
+  } catch(e) {}
 }
 
 async function syncRedeemedOffers() {

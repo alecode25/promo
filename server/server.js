@@ -454,6 +454,16 @@ app.post('/api/offers/check-tokens', requireUser, async (req, res) => {
   res.json({ used: (data || []).map(r => r.token) });
 });
 
+// GET /api/offers/my-redemptions — restituisce offerte già riscattate dall'utente
+app.get('/api/offers/my-redemptions', requireUser, async (req, res) => {
+  const user = req.currentUser;
+  const { data } = await sbService.from('offer_redemptions')
+    .select('offer_id, token')
+    .eq('user_id', user.id)
+    .not('used_at', 'is', null);
+  res.json(data || []);
+});
+
 // POST /api/scanner/redeem — cameriere scansiona QR offerta
 app.post('/api/scanner/redeem', requireScanner, async (req, res) => {
   const { token } = req.body;
