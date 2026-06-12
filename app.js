@@ -364,6 +364,13 @@ function _ensureQRLib() {
 }
 
 async function openOfferQR(offerId) {
+  const stored = JSON.parse(localStorage.getItem(_offerTokensKey()) || '{}');
+  if (stored[offerId]?.used) {
+    showToast('Offerta già riscattata');
+    goTo('screen-qr');
+    return;
+  }
+
   const o = OFFERS.find(x => x.id === offerId);
   showToast('Generazione QR…');
 

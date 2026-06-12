@@ -396,6 +396,15 @@ app.post('/api/offers/:id/token', async (req, res) => {
   const { data: offer } = await sbService.from('offers').select('id,name,active,expiry_date').eq('id', offerId).single();
   if (!offer || !offer.active) return res.status(404).json({ error: 'Offerta non disponibile' });
 
+  // Blocca se offerta già riscattata da questo utente
+  const { data: redeemed } = await sbService.from('offer_redemptions')
+    .select('token')
+    .eq('user_id', user.id)
+    .eq('offer_id', offerId)
+    .not('used_at', 'is', null)
+    .maybeSingle();
+  if (redeemed) return res.status(409).json({ error: 'Offerta già riscattata' });
+
   // Riusa token già esistente non usato per questo utente+offerta
   const { data: existing } = await sbService.from('offer_redemptions')
     .select('token,expires_at')
