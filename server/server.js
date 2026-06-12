@@ -69,7 +69,7 @@ function clearSessionCookies(res) {
   res.clearCookie('sb_access',  { ...COOKIE_OPTS });
   res.clearCookie('sb_refresh', { ...COOKIE_OPTS });
 }
-async function getUserFromRequest(req) {
+async function getUserFromRequest(req, res = null) {
   // Accetta sia cookie che Authorization: Bearer <token>
   const authHeader = req.headers['authorization'];
   const token = (authHeader && authHeader.startsWith('Bearer '))
@@ -84,10 +84,17 @@ async function getUserFromRequest(req) {
   if (!refreshToken) return null;
   const { data: refreshed, error: refreshErr } = await sbAnon.auth.refreshSession({ refresh_token: refreshToken });
   if (refreshErr || !refreshed?.session) return null;
+  if (res) setSessionCookies(res, refreshed.session); // aggiorna cookie con nuova sessione
   return refreshed.session.user;
 }
-// Alias per compatibilità
 const getUserFromCookies = getUserFromRequest;
+
+async function requireUser(req, res, next) {
+  const user = await getUserFromRequest(req, res);
+  if (!user) return res.status(401).json({ error: 'Non autenticato' });
+  req.currentUser = user;
+  next();
+}
 async function getProfile(userId) {
   const { data } = await sbService.from('profiles').select('*').eq('id', userId).single();
   return data;
@@ -179,9 +186,8 @@ app.post('/api/auth/logout', (req, res) => {
 // ===================================================
 // AUTH — SESSION CHECK
 // ===================================================
-app.get('/api/auth/session', async (req, res) => {
-  const user = await getUserFromCookies(req);
-  if (!user) return res.status(401).json({ error: 'Non autenticato' });
+app.get('/api/auth/session', requireUser, async (req, res) => {
+  const user = req.currentUser;
   const profile = await getProfile(user.id);
   res.json({
     user:    { id: user.id, email: user.email },
@@ -264,9 +270,8 @@ app.get('/api/admin/users', requireAdmin, async (req, res) => {
 });
 
 // PATCH /api/profile/update — aggiorna nome, cognome, telefono
-app.patch('/api/profile/update', async (req, res) => {
-  const user = await getUserFromRequest(req);
-  if (!user) return res.status(401).json({ error: 'Non autenticato' });
+app.patch('/api/profile/update', requireUser, async (req, res) => {
+  const user = req.currentUser;
   const { nome, cognome, phone } = req.body;
   if (!nome || !cognome) return res.status(400).json({ error: 'Nome e cognome obbligatori' });
   const updates = { nome, cognome, phone: phone ? phone.replace(/\s+/g, '') : null };
@@ -289,9 +294,8 @@ app.get('/api/admin/storage-config', requireAdmin, (req, res) => {
 // ===================================================
 
 // POST /api/invite  — invia invito a numero di telefono
-app.post('/api/invite', async (req, res) => {
-  const user = await getUserFromCookies(req);
-  if (!user) return res.status(401).json({ error: 'Non autenticato' });
+app.post('/api/invite', requireUser, async (req, res) => {
+  const user = req.currentUser;
 
   let { friend_phone } = req.body;
   if (!friend_phone) return res.status(400).json({ error: 'Numero mancante' });
@@ -318,9 +322,8 @@ app.post('/api/invite', async (req, res) => {
 });
 
 // GET /api/invite/sent  — inviti inviati dall'utente
-app.get('/api/invite/sent', async (req, res) => {
-  const user = await getUserFromCookies(req);
-  if (!user) return res.status(401).json({ error: 'Non autenticato' });
+app.get('/api/invite/sent', requireUser, async (req, res) => {
+  const user = req.currentUser;
   const { data } = await sbService.from('invites')
     .select('*')
     .eq('inviter_id', user.id)
@@ -329,9 +332,8 @@ app.get('/api/invite/sent', async (req, res) => {
 });
 
 // GET /api/invite/pending  — inviti ricevuti per il mio numero di telefono
-app.get('/api/invite/pending', async (req, res) => {
-  const user = await getUserFromCookies(req);
-  if (!user) return res.status(401).json({ error: 'Non autenticato' });
+app.get('/api/invite/pending', requireUser, async (req, res) => {
+  const user = req.currentUser;
   const myProfile = await getProfile(user.id);
   if (!myProfile?.phone) return res.json([]);
 
@@ -351,9 +353,8 @@ app.get('/api/invite/pending', async (req, res) => {
 });
 
 // POST /api/invite/:id/respond  — body: { action: 'accepted'|'declined' }
-app.post('/api/invite/:id/respond', async (req, res) => {
-  const user = await getUserFromCookies(req);
-  if (!user) return res.status(401).json({ error: 'Non autenticato' });
+app.post('/api/invite/:id/respond', requireUser, async (req, res) => {
+  const user = req.currentUser;
 
   const { action } = req.body;
   if (!['accepted', 'declined'].includes(action)) return res.status(400).json({ error: 'Azione non valida' });
@@ -400,9 +401,8 @@ app.get('/api/offers', async (req, res) => {
 });
 
 // POST /api/offers/:id/token — genera token monouso per riscattare offerta
-app.post('/api/offers/:id/token', async (req, res) => {
-  const user = await getUserFromRequest(req);
-  if (!user) return res.status(401).json({ error: 'Non autenticato' });
+app.post('/api/offers/:id/token', requireUser, async (req, res) => {
+  const user = req.currentUser;
 
   const offerId = parseInt(req.params.id, 10);
   const { data: offer } = await sbService.from('offers').select('id,name,active,expiry_date').eq('id', offerId).single();
@@ -437,9 +437,8 @@ app.post('/api/offers/:id/token', async (req, res) => {
 });
 
 // POST /api/offers/check-tokens — restituisce quali token sono già stati usati
-app.post('/api/offers/check-tokens', async (req, res) => {
-  const user = await getUserFromRequest(req);
-  if (!user) return res.status(401).json({ error: 'Non autenticato' });
+app.post('/api/offers/check-tokens', requireUser, async (req, res) => {
+  const user = req.currentUser;
 
   const { tokens } = req.body;
   if (!Array.isArray(tokens) || tokens.length === 0) return res.json({ used: [] });
