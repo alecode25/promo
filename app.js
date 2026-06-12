@@ -259,9 +259,15 @@ function refreshQR() {
 }
 
 // ===== OFFERTE RENDER =====
+function _getRedeemedOfferIds() {
+  const raw = JSON.parse(localStorage.getItem(_offerTokensKey()) || '{}');
+  return new Set(Object.entries(raw).filter(([, v]) => v.used).map(([id]) => Number(id)));
+}
+
 function renderHomeOffers() {
+  const redeemed = _getRedeemedOfferIds();
   const scroll = document.getElementById('offer-scroll');
-  scroll.innerHTML = OFFERS.filter(o => o.active).map(o => `
+  scroll.innerHTML = OFFERS.filter(o => o.active && !redeemed.has(o.id)).map(o => `
     <div class="offer-snap-card" onclick="openModal(${o.id})">
       ${o.image_url ? `<div class="offer-snap-img"><img src="${o.image_url}" alt="${o.name}" loading="lazy"></div>` : ''}
       <div class="offer-snap-tag">${o.tag}</div>
@@ -279,8 +285,10 @@ function renderHomeOffers() {
   `).join('');
 }
 function renderOfferList(filter = 'all') {
+  const redeemed = _getRedeemedOfferIds();
   const list  = document.getElementById('offer-list');
-  const items = filter === 'all' ? OFFERS : OFFERS.filter(o => o.category === filter);
+  const base  = filter === 'all' ? OFFERS : OFFERS.filter(o => o.category === filter);
+  const items = base.filter(o => !redeemed.has(o.id));
   list.innerHTML = items.map(o => `
     <div class="offer-full-card${o.active ? '' : ' dimmed'}"${o.active ? ` onclick="openModal(${o.id})"` : ''}>
       ${o.image_url ? `<div class="offer-full-img"><img src="${o.image_url}" alt="${o.name}" loading="lazy"></div>` : ''}
@@ -468,6 +476,8 @@ async function syncRedeemedOffers() {
     if (changed) {
       localStorage.setItem(_offerTokensKey(), JSON.stringify(raw));
       renderOfferQRsOnScreen();
+      renderHomeOffers();
+      renderOfferList('all');
     }
   } catch(e) {}
 }
