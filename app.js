@@ -378,6 +378,16 @@ async function openOfferQR(offerId) {
     await _ensureQRLib();
     const res  = await authFetch(`/api/offers/${offerId}/token`, { method: 'POST', headers: { 'Content-Type': 'application/json' } });
     const data = await res.json();
+    if (res.status === 409) {
+      // Offerta già riscattata — aggiorna localStorage e nascondi
+      const raw = JSON.parse(localStorage.getItem(_offerTokensKey()) || '{}');
+      raw[offerId] = { ...(raw[offerId] || { name: o?.name || '—', token: '', expiry_date: null }), used: true };
+      localStorage.setItem(_offerTokensKey(), JSON.stringify(raw));
+      renderHomeOffers();
+      renderOfferList('all');
+      showToast('Offerta già riscattata');
+      return;
+    }
     if (!res.ok) { showToast(data.error || 'Errore generazione QR'); return; }
 
     _saveOfferToken(offerId, o ? o.name : '—', data.token, o?.expiry_date || null);
@@ -398,7 +408,7 @@ function _offerTokensKey() { return 'club1_offer_tokens_' + (currentUser?.id || 
 
 function _saveOfferToken(offerId, name, token, expiry_date) {
   const stored = JSON.parse(localStorage.getItem(_offerTokensKey()) || '{}');
-  stored[offerId] = { name, token, expiry_date };
+  stored[offerId] = { name, token, expiry_date, used: stored[offerId]?.used || false };
   localStorage.setItem(_offerTokensKey(), JSON.stringify(stored));
 }
 
