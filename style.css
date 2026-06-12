@@ -115,7 +115,7 @@ body {
   flex-shrink: 0;
 }
 
-.topbar-left {}
+
 .topbar-logo {
   font-family: 'Playfair Display', serif;
   font-size: 19px;
@@ -799,7 +799,7 @@ body {
 }
 .menu-label { flex: 1; font-size: 14px; text-align: left; }
 .menu-arrow { color: var(--text-muted); font-size: 16px; }
-.danger-row { }
+
 .danger-icon { background: rgba(226,75,74,0.1); color: var(--danger); }
 .danger-label { color: var(--danger); }
 
