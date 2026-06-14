@@ -157,14 +157,7 @@
       <div class="admin-scanner-wrap" id="admin-scanner-wrap">
         <!-- camera area -->
         <div class="admin-cam-area hidden" id="admin-cam-area">
-          <video id="admin-scan-video" autoplay muted playsinline></video>
-          <canvas id="admin-scan-canvas" style="display:none"></canvas>
-          <div class="admin-scan-frame">
-            <div class="s-corner tl"></div>
-            <div class="s-corner tr"></div>
-            <div class="s-corner bl"></div>
-            <div class="s-corner br"></div>
-          </div>
+          <div id="admin-qr-reader"></div>
           <div class="admin-scan-hint" id="admin-scan-hint">Punta la fotocamera sul QR dell'utente</div>
         </div>
 
@@ -363,7 +356,7 @@
 <!-- TOAST -->
 <div id="a-toast"></div>
 
-<script src="/jsQR.js"></script>
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <script src="admin.js"></script>
 </body>
 </html>
