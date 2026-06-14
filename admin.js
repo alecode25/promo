@@ -58,7 +58,9 @@ async function showDashboard() {
 // ============================
 // ADMIN SCANNER
 // ============================
-let adminHtml5QrCode       = null;
+let adminScanVideo         = null;
+let adminScanCanvas        = null;
+let adminScanCtx           = null;
 let adminScanning          = false;
 let adminScannedUid        = null;
 let adminScannedOfferToken = null;
@@ -67,7 +69,7 @@ function toggleAdminScanner() {
   const btn     = document.getElementById('admin-scan-toggle');
   const camArea = document.getElementById('admin-cam-area');
 
-  if (adminScanning) {
+  if (adminScanning || adminScanVideo?.srcObject) {
     stopAdminScanner();
     btn.innerHTML = '<i class="ti ti-camera"></i> Avvia fotocamera';
     camArea.classList.add('hidden');
@@ -80,26 +82,28 @@ function toggleAdminScanner() {
   document.getElementById('admin-scan-result').classList.add('hidden');
   document.getElementById('admin-offer-result').classList.add('hidden');
   btn.innerHTML = '<i class="ti ti-camera-off"></i> Ferma fotocamera';
-  startAdminScanner();
+  startAdminCamera();
 }
 
-async function startAdminScanner() {
+async function startAdminCamera() {
+  adminScanVideo  = document.getElementById('admin-scan-video');
+  adminScanCanvas = document.getElementById('admin-scan-canvas');
+  adminScanCtx    = adminScanCanvas.getContext('2d', { willReadFrequently: true });
+
   try {
-    adminHtml5QrCode = new Html5Qrcode('admin-qr-reader');
-    await adminHtml5QrCode.start(
-      { facingMode: 'environment' },
-      { fps: 10, qrbox: { width: 220, height: 220 }, aspectRatio: 1.0 },
-      (decodedText) => {
-        if (adminScannedUid || adminScannedOfferToken) return;
-        if (decodedText.startsWith('club1piano-offer:')) {
-          handleAdminOfferQR(decodedText);
-        } else if (decodedText.startsWith('club1piano:')) {
-          handleAdminQR(decodedText);
-        }
-      },
-      () => {}
-    );
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } },
+    });
+    adminScanVideo.srcObject = stream;
+    await adminScanVideo.play();
+    await new Promise(res => {
+      if (adminScanVideo.readyState >= 2) { res(); return; }
+      adminScanVideo.addEventListener('loadeddata', res, { once: true });
+    });
+    adminScanCanvas.width  = adminScanVideo.videoWidth  || 640;
+    adminScanCanvas.height = adminScanVideo.videoHeight || 480;
     adminScanning = true;
+    requestAnimationFrame(adminScanLoop);
   } catch(e) {
     toast('Fotocamera non disponibile: ' + (e.message || 'errore'));
     document.getElementById('admin-cam-area').classList.add('hidden');
@@ -109,11 +113,35 @@ async function startAdminScanner() {
 
 function stopAdminScanner() {
   adminScanning = false;
-  if (adminHtml5QrCode) {
-    adminHtml5QrCode.stop().then(() => { adminHtml5QrCode.clear(); adminHtml5QrCode = null; }).catch(() => {});
+  if (adminScanVideo?.srcObject) {
+    adminScanVideo.srcObject.getTracks().forEach(t => t.stop());
+    adminScanVideo.srcObject = null;
   }
   adminScannedUid        = null;
   adminScannedOfferToken = null;
+}
+
+function adminScanLoop() {
+  if (!adminScanning) return;
+  if (adminScanVideo.readyState >= adminScanVideo.HAVE_ENOUGH_DATA) {
+    adminScanCtx.drawImage(adminScanVideo, 0, 0, adminScanCanvas.width, adminScanCanvas.height);
+    const img = adminScanCtx.getImageData(0, 0, adminScanCanvas.width, adminScanCanvas.height);
+    let code = null;
+    try { code = jsQR(img.data, img.width, img.height, { inversionAttempts: 'attemptBoth' }); } catch(e) {}
+    if (code?.data) {
+      if (code.data.startsWith('club1piano-offer:')) {
+        adminScanning = false;
+        handleAdminOfferQR(code.data);
+        return;
+      }
+      if (code.data.startsWith('club1piano:')) {
+        adminScanning = false;
+        handleAdminQR(code.data);
+        return;
+      }
+    }
+  }
+  requestAnimationFrame(adminScanLoop);
 }
 
 async function handleAdminQR(qrData) {
@@ -158,6 +186,8 @@ function cancelAdminScan() {
   adminScannedUid = null;
   document.getElementById('admin-scan-result').classList.add('hidden');
   document.getElementById('admin-scan-hint').textContent = 'Punta la fotocamera sul QR dell\'utente';
+  adminScanning = true;
+  requestAnimationFrame(adminScanLoop);
 }
 
 async function confirmAdminCheckin() {
@@ -174,6 +204,8 @@ async function confirmAdminCheckin() {
     document.getElementById('admin-scan-result').classList.add('hidden');
     adminScannedUid = null;
     document.getElementById('admin-scan-hint').textContent = 'Punta la fotocamera sul QR dell\'utente';
+    adminScanning = true;
+    requestAnimationFrame(adminScanLoop);
   } catch(e) {
     toast('Errore di rete');
   } finally {
@@ -229,6 +261,8 @@ function cancelAdminOfferScan() {
   adminScannedOfferToken = null;
   document.getElementById('admin-offer-result').classList.add('hidden');
   document.getElementById('admin-scan-hint').textContent = 'Punta la fotocamera sul QR dell\'utente';
+  adminScanning = true;
+  requestAnimationFrame(adminScanLoop);
 }
 
 async function confirmAdminRedeem() {
@@ -245,6 +279,8 @@ async function confirmAdminRedeem() {
     document.getElementById('admin-offer-result').classList.add('hidden');
     adminScannedOfferToken = null;
     document.getElementById('admin-scan-hint').textContent = 'Punta la fotocamera sul QR dell\'utente';
+    adminScanning = true;
+    requestAnimationFrame(adminScanLoop);
   } catch(e) {
     toast('Errore di rete');
   } finally {
@@ -365,7 +401,7 @@ function closeSidebar() {
 // ============================
 function switchTab(tab) {
   // Stop admin scanner if leaving scanner tab
-  if (tab !== 'scanner' && adminScanning) {
+  if (tab !== 'scanner' && (adminScanning || adminScanVideo?.srcObject)) {
     stopAdminScanner();
     const camArea = document.getElementById('admin-cam-area');
     if (camArea) camArea.classList.add('hidden');
