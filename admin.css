@@ -632,14 +632,55 @@ select.a-input { cursor: pointer; }
   gap: 20px;
   max-width: 520px;
 }
-.admin-cam-area {
-  position: relative;
-  width: 100%;
-  max-width: 360px;
+/* ============================
+   SCANNER OVERLAY
+   ============================ */
+#admin-scan-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
   background: #000;
-  border-radius: 14px;
+  display: flex;
+  flex-direction: column;
+}
+#admin-scan-overlay.hidden { display: none !important; }
+.aso-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  background: rgba(0,0,0,0.7);
+  position: relative;
+  z-index: 2;
+}
+.aso-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #fff;
+}
+.aso-close {
+  background: rgba(255,255,255,0.12);
+  border: none;
+  color: #fff;
+  font-size: 18px;
+  width: 36px; height: 36px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+}
+.aso-viewport {
+  flex: 1;
+  position: relative;
   overflow: hidden;
-  border: 1px solid var(--border);
+}
+#admin-qr-reader {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  border: none !important;
+  background: transparent !important;
+  overflow: hidden;
 }
 #admin-qr-reader video {
   width: 100% !important;
@@ -650,6 +691,19 @@ select.a-input { cursor: pointer; }
 #admin-qr-reader__dashboard { display: none !important; }
 #admin-qr-reader__header_message { display: none !important; }
 #admin-qr-reader__status_span { display: none !important; }
+.aso-hint {
+  position: absolute;
+  bottom: 28px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0,0,0,0.65);
+  color: rgba(255,255,255,0.85);
+  font-size: 13px;
+  padding: 7px 16px;
+  border-radius: 20px;
+  white-space: nowrap;
+  pointer-events: none;
+}
 .admin-scan-frame {
   position: absolute;
   top: 50%; left: 50%;

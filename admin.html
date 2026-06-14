@@ -155,11 +155,6 @@
       </div>
 
       <div class="admin-scanner-wrap" id="admin-scanner-wrap">
-        <!-- camera area -->
-        <div class="admin-cam-area hidden" id="admin-cam-area">
-          <div id="admin-qr-reader"></div>
-          <div class="admin-scan-hint" id="admin-scan-hint">Punta la fotocamera sul QR dell'utente</div>
-        </div>
 
         <!-- offer result panel -->
         <div class="admin-scan-result hidden" id="admin-offer-result">
@@ -350,6 +345,18 @@
       <button class="a-btn a-btn--ghost" onclick="closeWaiterModal()">Annulla</button>
       <button class="a-btn" id="waiter-save-btn" onclick="saveWaiter()">Crea</button>
     </div>
+  </div>
+</div>
+
+<!-- SCANNER OVERLAY (full-screen, come scanner.html) -->
+<div id="admin-scan-overlay" class="hidden">
+  <div class="aso-topbar">
+    <div class="aso-title">Scanner QR</div>
+    <button class="aso-close" onclick="stopAdminScanner()"><i class="ti ti-x"></i></button>
+  </div>
+  <div class="aso-viewport">
+    <div id="admin-qr-reader"></div>
+    <div class="aso-hint" id="admin-scan-hint">Punta la fotocamera sul QR dell'utente</div>
   </div>
 </div>
 
