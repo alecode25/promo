@@ -58,11 +58,12 @@ async function showDashboard() {
 // ============================
 // ADMIN SCANNER
 // ============================
-let adminScanVideo   = null;
-let adminScanCanvas  = null;
-let adminScanCtx     = null;
-let adminScanning    = false;
-let adminScannedUid  = null;
+let adminScanVideo        = null;
+let adminScanCanvas       = null;
+let adminScanCtx          = null;
+let adminScanning         = false;
+let adminScannedUid       = null;
+let adminScannedOfferToken = null;
 
 function toggleAdminScanner() {
   const btn      = document.getElementById('admin-scan-toggle');
@@ -115,7 +116,8 @@ function stopAdminScanner() {
     adminScanVideo.srcObject.getTracks().forEach(t => t.stop());
     adminScanVideo.srcObject = null;
   }
-  adminScannedUid = null;
+  adminScannedUid        = null;
+  adminScannedOfferToken = null;
 }
 
 function adminScanLoop() {
@@ -125,6 +127,11 @@ function adminScanLoop() {
     const img  = adminScanCtx.getImageData(0, 0, adminScanCanvas.width, adminScanCanvas.height);
     let code = null;
     try { code = jsQR(img.data, img.width, img.height, { inversionAttempts: 'attemptBoth' }); } catch(e) {}
+    if (code?.data?.startsWith('club1piano-offer:')) {
+      adminScanning = false;
+      handleAdminOfferQR(code.data);
+      return;
+    }
     if (code?.data?.startsWith('club1piano:')) {
       adminScanning = false;
       handleAdminQR(code.data);
@@ -203,6 +210,83 @@ async function confirmAdminCheckin() {
   } finally {
     btn.disabled = false;
     btn.innerHTML = '<i class="ti ti-check"></i> Conferma check-in';
+  }
+}
+
+// ============================
+// ADMIN OFFER QR
+// ============================
+async function handleAdminOfferQR(qrData) {
+  const hint  = document.getElementById('admin-scan-hint');
+  const token = qrData.replace('club1piano-offer:', '');
+  hint.textContent = 'QR offerta rilevato — verifica…';
+
+  try {
+    const res  = await adminFetch('/api/scanner/redeem', 'POST', { token });
+    const data = await res.json();
+    if (!res.ok) {
+      toast(data.error || 'QR non valido');
+      hint.textContent = 'Punta la fotocamera sul QR dell\'utente';
+      adminScanning = true;
+      requestAnimationFrame(adminScanLoop);
+      return;
+    }
+    adminScannedOfferToken = token;
+    showAdminOfferCard(data.offer, data.profile);
+  } catch(e) {
+    toast('Errore di rete');
+    hint.textContent = 'Punta la fotocamera sul QR dell\'utente';
+    adminScanning = true;
+    requestAnimationFrame(adminScanLoop);
+  }
+}
+
+function showAdminOfferCard(offer, profile) {
+  const nome    = profile?.nome    || 'Utente';
+  const cognome = profile?.cognome || '';
+  const initials = (nome[0] || '') + (cognome[0] || '');
+  const pts     = profile?.punti || 0;
+  const level   = pts >= 1000 ? 'Platinum' : pts >= 300 ? 'Gold' : 'Silver';
+
+  document.getElementById('aor-avatar').textContent     = initials.toUpperCase() || '?';
+  document.getElementById('aor-name').textContent       = nome + (cognome ? ' ' + cognome : '');
+  document.getElementById('aor-level').textContent      = '✦ Membro ' + level;
+  document.getElementById('aor-offer-name').textContent = offer?.name        || '—';
+  document.getElementById('aor-offer-desc').textContent = offer?.description || '';
+  document.getElementById('aor-offer-price').textContent = offer?.price      || '';
+
+  document.getElementById('admin-offer-result').classList.remove('hidden');
+}
+
+function cancelAdminOfferScan() {
+  adminScannedOfferToken = null;
+  document.getElementById('admin-offer-result').classList.add('hidden');
+  document.getElementById('admin-scan-hint').textContent = 'Punta la fotocamera sul QR dell\'utente';
+  adminScanning = true;
+  requestAnimationFrame(adminScanLoop);
+}
+
+async function confirmAdminRedeem() {
+  if (!adminScannedOfferToken) return;
+  const btn = document.getElementById('aor-confirm-btn');
+  btn.disabled = true; btn.textContent = 'Conferma…';
+
+  try {
+    const res  = await adminFetch('/api/scanner/confirm-redeem', 'POST', { token: adminScannedOfferToken });
+    const data = await res.json();
+    if (!res.ok) { toast(data.error || 'Errore'); return; }
+
+    toast('Offerta riscattata ✓');
+    document.getElementById('admin-offer-result').classList.add('hidden');
+    adminScannedOfferToken = null;
+    document.getElementById('admin-scan-hint').textContent = 'Punta la fotocamera sul QR dell\'utente';
+    adminScanning = true;
+    requestAnimationFrame(adminScanLoop);
+  } catch(e) {
+    toast('Errore di rete');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="ti ti-gift"></i> Conferma riscatto';
   }
 }
 

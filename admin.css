@@ -43,7 +43,25 @@ html, body {
   justify-content: center;
   background: var(--dark);
   padding: 20px;
+  position: relative;
 }
+.login-back-btn {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--text-muted);
+  text-decoration: none;
+  font-size: 20px;
+  transition: color 0.15s, background 0.15s;
+}
+.login-back-btn:hover { color: var(--text); background: var(--border); }
 .login-box {
   background: var(--surface);
   border: 1px solid var(--border);
@@ -249,6 +267,36 @@ select.a-input { cursor: pointer; }
   min-height: 44px;
 }
 .sidebar-logout:hover { color: var(--danger); }
+
+.sidebar-back-link {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 13px;
+  font-family: inherit;
+  padding: 12px 22px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  min-height: 44px;
+}
+.sidebar-back-link:hover { color: var(--accent); }
+
+.topbar-back-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  color: var(--text-muted);
+  text-decoration: none;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+.topbar-back-btn:hover { color: var(--text); background: var(--border); }
 
 /* Overlay backdrop (mobile) */
 .sidebar-backdrop {

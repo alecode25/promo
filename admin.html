@@ -13,6 +13,9 @@
 
 <!-- LOGIN -->
 <div id="admin-login" class="login-wrap">
+  <a href="offerte.html" class="login-back-btn" aria-label="Torna all'app">
+    <i class="ti ti-arrow-left"></i>
+  </a>
   <div class="login-box">
     <div class="login-logo">Club 1 Piano</div>
     <div class="login-sub">Pannello Amministratore</div>
@@ -163,6 +166,28 @@
             <div class="s-corner br"></div>
           </div>
           <div class="admin-scan-hint" id="admin-scan-hint">Punta la fotocamera sul QR dell'utente</div>
+        </div>
+
+        <!-- offer result panel -->
+        <div class="admin-scan-result hidden" id="admin-offer-result">
+          <div class="asr-header">
+            <div class="asr-avatar" id="aor-avatar">??</div>
+            <div>
+              <div class="asr-name" id="aor-name">—</div>
+              <div class="asr-level" id="aor-level">—</div>
+            </div>
+          </div>
+          <div style="background:var(--border);border-radius:10px;padding:12px 14px;margin-bottom:12px">
+            <div style="font-size:13px;font-weight:600;color:var(--text)" id="aor-offer-name">—</div>
+            <div style="font-size:12px;color:var(--text-muted);margin-top:4px" id="aor-offer-desc">—</div>
+            <div style="font-size:13px;font-weight:700;color:var(--accent);margin-top:6px" id="aor-offer-price">—</div>
+          </div>
+          <div style="display:flex;gap:10px">
+            <button class="a-btn a-btn--ghost a-btn--sm" onclick="cancelAdminOfferScan()"><i class="ti ti-x"></i> Annulla</button>
+            <button class="a-btn a-btn--sm" id="aor-confirm-btn" onclick="confirmAdminRedeem()" style="background:var(--success);flex:1">
+              <i class="ti ti-gift"></i> Conferma riscatto
+            </button>
+          </div>
         </div>
 
         <!-- result panel -->
