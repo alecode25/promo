@@ -80,7 +80,8 @@ function toggleAdminScanner() {
   document.getElementById('admin-scan-result').classList.add('hidden');
   document.getElementById('admin-offer-result').classList.add('hidden');
   btn.innerHTML = '<i class="ti ti-camera-off"></i> Ferma fotocamera';
-  startAdminScanner();
+  // attendi layout dopo display:none → block, poi avvia scanner
+  requestAnimationFrame(() => requestAnimationFrame(startAdminScanner));
 }
 
 async function startAdminScanner() {
