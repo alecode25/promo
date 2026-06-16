@@ -411,7 +411,8 @@ function _ensureQRLib() {
 
 function showTimeBanner(msg) {
   const overlay = document.getElementById('time-banner-overlay');
-  const msgEl   = document.getElementById('time-banner-msg');
+  if (!overlay) { showToast(msg || 'Non puoi usare il QR in questo orario'); return; }
+  const msgEl = document.getElementById('time-banner-msg');
   if (msgEl) msgEl.textContent = msg || 'Non puoi usare il QR in questo orario';
   overlay.classList.remove('hidden');
 }
