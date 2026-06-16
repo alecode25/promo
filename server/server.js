@@ -236,10 +236,10 @@ app.get('/api/admin/offers', requireAdmin, async (req, res) => {
 
 // POST /api/admin/offers
 app.post('/api/admin/offers', requireAdmin, async (req, res) => {
-  const { name, category, tag, price, original_price, expiry_date, description, image_url, sort_order, active } = req.body;
+  const { name, category, tag, price, original_price, expiry_date, description, image_url, sort_order, active, available_from_time } = req.body;
   if (!name || !description || !price || !category) return res.status(400).json({ error: 'Campi obbligatori mancanti' });
   const { data, error } = await sbService.from('offers')
-    .insert({ name, category, tag, price, original_price, expiry_date: expiry_date || null, description, image_url, sort_order: sort_order || 0, active: active !== false })
+    .insert({ name, category, tag, price, original_price, expiry_date: expiry_date || null, description, image_url, sort_order: sort_order || 0, active: active !== false, available_from_time: available_from_time || '22:00:00' })
     .select().single();
   if (error) return res.status(500).json({ error: error.message });
   res.json(data);
@@ -248,9 +248,9 @@ app.post('/api/admin/offers', requireAdmin, async (req, res) => {
 // PUT /api/admin/offers/:id
 app.put('/api/admin/offers/:id', requireAdmin, async (req, res) => {
   const { id } = req.params;
-  const { name, category, tag, price, original_price, expiry_date, description, image_url, sort_order, active } = req.body;
+  const { name, category, tag, price, original_price, expiry_date, description, image_url, sort_order, active, available_from_time } = req.body;
   const { data, error } = await sbService.from('offers')
-    .update({ name, category, tag, price, original_price, expiry_date: expiry_date || null, description, image_url, sort_order, active })
+    .update({ name, category, tag, price, original_price, expiry_date: expiry_date || null, description, image_url, sort_order, active, available_from_time: available_from_time || '22:00:00' })
     .eq('id', id).select().single();
   if (error) return res.status(500).json({ error: error.message });
   res.json(data);
@@ -407,8 +407,19 @@ app.post('/api/offers/:id/token', requireUser, async (req, res) => {
   const user = req.currentUser;
 
   const offerId = parseInt(req.params.id, 10);
-  const { data: offer } = await sbService.from('offers').select('id,name,active,expiry_date').eq('id', offerId).single();
+  const { data: offer } = await sbService.from('offers').select('id,name,active,expiry_date,available_from_time').eq('id', offerId).single();
   if (!offer || !offer.active) return res.status(404).json({ error: 'Offerta non disponibile' });
+
+  // Controlla orario disponibilità (fuso orario Italia)
+  if (offer.available_from_time) {
+    const romeTime = new Intl.DateTimeFormat('it-IT', { timeZone: 'Europe/Rome', hour: '2-digit', minute: '2-digit', hour12: false }).format(new Date());
+    const [rh, rm] = romeTime.split(':').map(Number);
+    const [fh, fm] = offer.available_from_time.split(':').map(Number);
+    if (rh * 60 + rm < fh * 60 + fm) {
+      const pad = n => String(n).padStart(2, '0');
+      return res.status(403).json({ error: `QR disponibile dalle ${pad(fh)}:${pad(fm)}` });
+    }
+  }
 
   // Blocca se offerta già riscattata da questo utente
   const { data: redeemed } = await sbService.from('offer_redemptions')

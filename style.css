@@ -1696,6 +1696,67 @@ body {
 
 
 /* ==============================
+   TIME RESTRICTION BANNER
+   ============================== */
+.time-banner-card {
+  text-align: center;
+  padding: 36px 28px 44px;
+}
+.time-banner-icon {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: var(--gold-glow);
+  border: 1.5px solid rgba(255,184,0,0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 20px;
+}
+.time-banner-icon i {
+  font-size: 32px;
+  color: var(--gold);
+}
+.time-banner-eyebrow {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 8px;
+}
+.time-banner-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 10px;
+  line-height: 1.2;
+}
+.time-banner-sub {
+  font-size: 14px;
+  color: var(--text-muted);
+  margin-bottom: 28px;
+  white-space: pre-line;
+  line-height: 1.6;
+}
+.time-banner-btn {
+  width: 100%;
+  background: var(--gold);
+  color: #0a0a0a;
+  border: none;
+  border-radius: 14px;
+  padding: 16px;
+  font-size: 15px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  letter-spacing: 0.02em;
+  transition: opacity 0.15s, transform 0.1s;
+}
+.time-banner-btn:active { opacity: 0.82; transform: scale(0.98); }
+
+/* ==============================
    OFFER QR OVERLAY
    ============================== */
 .offer-qr-modal {

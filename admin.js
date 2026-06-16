@@ -554,7 +554,8 @@ function openOfferModal(defaultCategory = 'drink') {
   document.getElementById('f-tag').value         = '';
   document.getElementById('f-price').value       = '';
   document.getElementById('f-orig').value        = '';
-  document.getElementById('f-expiry-date').value = '';
+  document.getElementById('f-expiry-date').value    = '';
+  document.getElementById('f-available-time').value = '22:00';
   document.getElementById('f-desc').value        = '';
   document.getElementById('f-img').value         = '';
   document.getElementById('f-img-file').value    = '';
@@ -585,6 +586,9 @@ function editOffer(id) {
   } else {
     document.getElementById('f-expiry-date').value = '';
   }
+  document.getElementById('f-available-time').value = o.available_from_time
+    ? o.available_from_time.substring(0, 5)
+    : '22:00';
   document.getElementById('f-desc').value        = o.description;
   document.getElementById('f-img').value         = o.image_url || '';
   document.getElementById('f-order').value       = o.sort_order ?? 0;
@@ -615,6 +619,7 @@ async function saveOffer() {
     expiry_date:    document.getElementById('f-expiry-date').value
                       ? new Date(document.getElementById('f-expiry-date').value + 'T23:59:59').toISOString()
                       : null,
+    available_from_time: document.getElementById('f-available-time').value || '22:00',
     description:    document.getElementById('f-desc').value.trim(),
     image_url:      document.getElementById('f-img').value.trim() || null,
     sort_order:     parseInt(document.getElementById('f-order').value) || 0,

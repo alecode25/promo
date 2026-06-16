@@ -165,6 +165,7 @@ async function loadOffers() {
         price:     o.price,
         orig:      o.original_price,
         expiry_date: o.expiry_date,
+        available_from_time: o.available_from_time || null,
         active:    o.active,
         image_url: o.image_url || null,
       }));
@@ -408,7 +409,33 @@ function _ensureQRLib() {
   });
 }
 
+function showTimeBanner(msg) {
+  const overlay = document.getElementById('time-banner-overlay');
+  const msgEl   = document.getElementById('time-banner-msg');
+  if (msgEl) msgEl.textContent = msg || 'Non puoi usare il QR in questo orario';
+  overlay.classList.remove('hidden');
+}
+
+function closeTimeBanner(event) {
+  if (event && event.target !== document.getElementById('time-banner-overlay')) return;
+  document.getElementById('time-banner-overlay').classList.add('hidden');
+}
+
 async function openOfferQR(offerId) {
+  // Controlla orario disponibilità
+  const o = OFFERS.find(x => x.id === offerId);
+  if (o?.available_from_time) {
+    const [h, m] = o.available_from_time.split(':').map(Number);
+    const now = new Date();
+    const nowMins = now.getHours() * 60 + now.getMinutes();
+    const fromMins = h * 60 + m;
+    if (nowMins < fromMins) {
+      const pad = n => String(n).padStart(2, '0');
+      showTimeBanner(`Non puoi usare il QR in questo orario.\nDisponibile dalle ${pad(h)}:${pad(m)}`);
+      return;
+    }
+  }
+
   const stored = JSON.parse(localStorage.getItem(_offerTokensKey()) || '{}');
 
   // Già usata → blocca
@@ -424,7 +451,6 @@ async function openOfferQR(offerId) {
     return;
   }
 
-  const o = OFFERS.find(x => x.id === offerId);
   showToast('Generazione QR…');
 
   try {
@@ -441,6 +467,7 @@ async function openOfferQR(offerId) {
       showToast('Offerta già riscattata');
       return;
     }
+    if (res.status === 403) { showTimeBanner(data.error || 'Non puoi usare il QR in questo orario'); return; }
     if (!res.ok) { showToast(data.error || 'Errore generazione QR'); return; }
 
     _saveOfferToken(offerId, o ? o.name : '—', data.token, o?.expiry_date || null);

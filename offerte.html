@@ -308,6 +308,17 @@
   </div>
 </div>
 
+<!-- TIME RESTRICTION BANNER -->
+<div id="time-banner-overlay" class="modal-overlay hidden" onclick="closeTimeBanner(event)">
+  <div class="modal-card time-banner-card">
+    <div class="time-banner-icon"><i class="ti ti-clock-pause"></i></div>
+    <div class="time-banner-eyebrow">Fuori orario</div>
+    <div class="time-banner-title">Non puoi usare il QR adesso</div>
+    <div id="time-banner-msg" class="time-banner-sub">Non puoi usare il QR in questo orario</div>
+    <button class="time-banner-btn" onclick="closeTimeBanner()">Ho capito</button>
+  </div>
+</div>
+
 <!-- QR LIB -->
 <script src="/qrcode.min.js"></script>
 <script src="app.js"></script>
